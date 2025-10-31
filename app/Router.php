@@ -2,6 +2,9 @@
 
 namespace app;
 
+use app\Controllers\BookingController;
+use app\Controllers\UsersController;
+
 class Router
 {
     public static $routes = [];
@@ -9,8 +12,10 @@ class Router
     public static function init()
     {
         // Define application routes here
-        Router::add('/', fn() => Router::render('Welcome'));
-
+        Router::add('/', fn() => (new UsersController())->index());
+        Router::add('/login', fn() => (new UsersController())->login($_POST['username'] ?? 0, $_POST['password'] ?? 0), 'POST');
+        Router::add('/logout', fn() => (new UsersController())->logout());
+        
         Router::run();
     }
 
