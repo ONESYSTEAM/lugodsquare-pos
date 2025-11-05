@@ -1,9 +1,4 @@
 <?php
-// Access control
-if (!isset($_SESSION['user_id']) || $_SESSION['user_id'] != 1) {
-    header('Location: /');
-    exit;
-}
 
 // Generate transaction details
 $transaction_no = 'TXN-' . strtoupper(uniqid());
@@ -19,176 +14,11 @@ $date = date('F d, Y');
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css">
+    <!-- Bootstrap Icons CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
-    <style>
-        * {
-            box-sizing: border-box;
-        }
+    <link rel="stylesheet" href="/css/custom.css">
 
-        body {
-            background-color: #f7f7f7;
-            font-family: 'Poppins', sans-serif;
-            margin: 0;
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        /* HEADER */
-        .pos-header {
-            background: #dc3545;
-            color: #fff;
-            padding: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            height: 70px;
-        }
-
-        .pos-header h5 {
-            margin: 0;
-        }
-
-        /* MAIN CONTAINER */
-        .pos-container {
-            display: flex;
-            height: calc(100vh - 70px);
-            overflow: hidden;
-        }
-
-        /* PRODUCTS */
-        .pos-products {
-            flex: 3;
-            padding: 15px;
-            background-color: #f7f7f7;
-            overflow-y: auto;
-        }
-
-        .product-card {
-            background: #fff;
-            border-radius: 8px;
-            padding: 15px;
-            text-align: center;
-            transition: 0.2s;
-            cursor: pointer;
-            height: 100%;
-        }
-
-        .product-card:hover {
-            background: #f0f0f0;
-            transform: scale(1.03);
-        }
-
-        .product-img {
-            width: 100%;
-            height: 120px;
-            object-fit: cover;
-            border-radius: 6px;
-        }
-
-        /* SIDEBAR */
-        .pos-sidebar {
-            flex: 1;
-            background: #fff;
-            border-left: 2px solid #e9ecef;
-            display: flex;
-            flex-direction: column;
-            max-height: calc(100vh - 70px);
-            position: relative;
-        }
-
-        .order-list {
-            flex-grow: 1;
-            overflow-y: auto;
-            padding-right: 5px;
-            /* Space for button */
-        }
-
-        .order-list::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .order-list::-webkit-scrollbar-thumb {
-            background-color: #ccc;
-            border-radius: 10px;
-        }
-
-        .transaction-info {
-            background: #fff3cd;
-            border: 1px solid #ffeeba;
-            border-radius: 6px;
-            padding: 10px;
-            margin-bottom: 15px;
-            position: sticky;
-            top: 0;
-            z-index: 5;
-        }
-
-        /* COLLAPSIBLE SIDEBAR (MOBILE) */
-        @media (max-width: 991px) {
-            .pos-container {
-                flex-direction: row;
-                position: relative;
-            }
-
-            .pos-products {
-                flex: 1;
-                overflow-y: auto;
-                width: 100%;
-                transition: margin-right 0.3s ease;
-            }
-
-            .pos-sidebar {
-                position: fixed;
-                right: -100%;
-                width: 80%;
-                max-width: 320px;
-                height: calc(100vh - 70px);
-                box-shadow: -2px 0 10px rgba(0, 0, 0, 0.2);
-                transition: right 0.3s ease;
-                z-index: 999;
-            }
-
-            .pos-sidebar.active {
-                right: 0;
-            }
-
-            .toggle-sidebar-btn {
-                background: #fff;
-                color: #dc3545;
-                border: none;
-                font-weight: bold;
-                padding: 5px 10px;
-                border-radius: 4px;
-                font-size: 14px;
-            }
-
-            .pos-header {
-                display: flex;
-                flex-wrap: wrap;
-                justify-content: space-between;
-                align-items: center;
-                gap: 10px;
-            }
-        }
-
-        @media (max-width: 576px) {
-            .pos-sidebar {
-                width: 100%;
-            }
-
-            .product-img {
-                height: 100px;
-            }
-
-            .product-card h6 {
-                font-size: 13px;
-            }
-
-            .product-card p {
-                font-size: 12px;
-            }
-        }
-    </style>
 </head>
 
 <body>
@@ -204,6 +34,8 @@ $date = date('F d, Y');
             </div>
         </div>
         <div>
+            <button class="btn btn-light btn-sm text-danger fw-bold" id="transactionBtn"><i class="bi bi-clock-history"></i> Transaction History</button>
+            <button class="btn btn-light btn-sm text-danger fw-bold d-none" id="orderSumBtn"><i class="bi bi-receipt"></i> Order Summary</button>
             <a href="/logout" class="btn btn-light btn-sm text-danger fw-bold">
                 <i class="mdi mdi-logout"></i> Logout
             </a>
@@ -215,26 +47,22 @@ $date = date('F d, Y');
         <!-- Products Section -->
         <div class="pos-products">
             <div class="transaction-info">
-                <p class="mb-1"><strong>Transaction No:</strong> <?= $transaction_no ?></p>
+                <p class="mb-1"><strong>Transaction No:</strong> <span id="transaction-number"><?= $transaction_no ?></span></p>
                 <p class="mb-1"><strong>Date:</strong> <?= $date ?></p>
                 <p class="mb-0"><strong>Time:</strong> <span id="live-time"></span></p>
             </div>
 
             <div class="row g-3">
-                <?php
-                for ($i = 1; $i <= 40; $i++):
-                    $name = "Product $i";
-                    $price = rand(50, 200);
-                    $img = 'https://via.placeholder.com/150';
-                ?>
+                <?php foreach ($products as $product): ?>
                     <div class="col-6 col-md-4 col-lg-3">
                         <div class="product-card">
-                            <img src="<?= $img ?>" class="product-img" alt="<?= $name ?>">
-                            <h6 class="mt-2 mb-1"><?= $name ?></h6>
-                            <p class="text-danger mb-0">₱<?= number_format($price, 2) ?></p>
+                            <img src="https://placehold.co/150" class="product-img" alt="<?= $product['product_name'] ?>">
+                            <h6 class="mt-2 mb-1"><?= $product['product_name'] ?></h6>
+                            <p class="text-danger mb-0">₱<?= number_format($product['price'], 2) ?></p>
+                            <small>Qty: <?= $product['qty'] ?></small>
                         </div>
                     </div>
-                <?php endfor; ?>
+                <?php endforeach; ?>
             </div>
         </div>
 
@@ -243,19 +71,96 @@ $date = date('F d, Y');
             <h6 class="fw-bold text-danger mb-1 p-3">Order Summary</h6>
             <div class="order-list">
                 <div class="p-3 py-0">
-                    <?php for ($i = 0; $i < 40; $i++): ?>
-                        <p>1x Sample Item <?= $i + 1 ?> — ₱<?= rand(50, 200) ?>.00</p>
-                    <?php endfor; ?>
                 </div>
+
+            </div>
+            <div class="p-3 border-top bg-light d-flex gap-2 justify-content-end">
+                <button class="btn btn-sm btn-outline-danger" id="editItemBtn" disabled>Edit Item</button>
+                <button class="btn btn-sm btn-outline-secondary" id="removeItemBtn" disabled>Remove Item</button>
             </div>
             <div class="bg-danger p-3">
-                <p class="text-light"><small>Sub-Total: ₱200.00</small> <br> <small>Discount: ₱20.00</small> <br> <span class="fw-bold">Total: ₱200.00</span></p>
-                <button class="btn btn-outline-light w-100 payment-btn">Proceed to Payment</button>
+                <div class="mb-3">
+                    <div class="fw-bold text-light mb-2 ">Membership Card:</div>
+                    <div class="" id="membershipCard-con">
+                        <input type="text" id="membershipCard" class="form-control" placeholder="Scan or enter card number">
+                    </div>
+                    <div class="mt-2 d-none" id="undoBtn-con">
+                        <button class="btn btn-outline-light btn-sm" id="undoBtn">Undo Discount</button>
+                    </div>
+                </div>
+                <hr>
+                <p class="text-light"><span id="subTotal"><small>Sub-Total: ₱0.00</small></span> <br> <small>Discount: ₱0.00</small> <br> <span class="fw-bold">Total: ₱0.00</span></p>
+
+                <button class="btn btn-outline-light w-100 payment-btn" id="paymentBtn">Proceed to Payment</button>
+            </div>
+        </div>
+        <!-- SideBar / Transaction History -->
+        <div class="pos-sidebar d-none" id="transactionSideBar">
+            <h6 class="fw-bold text-danger mb-1 p-3 mb-3 border-bottom">Transaction History</h6>
+
+            <div class="transaction-list">
+                <?php if (!empty($transactions)): ?>
+                    <?php foreach ($transactions as $data): ?>
+                        <div class="transaction-item d-flex mx-3 justify-content-between flex-column">
+                            <input type="hidden" id="saleId" value="<?= $data['id'] ?>">
+                            <span class="transactionNumber"><?= $data['transaction_no'] ?></span>
+                            <small class="fw-bold ps-1"><?= date('F j, Y g:i A', strtotime($data['created_at'])) ?></small>
+                        </div>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <div class="text-center">
+                        <small class="text-muted text-center">No transactions made</small>
+
+                    </div>
+                <?php endif ?>
+            </div>
+
+            <div class="p-3 border-top bg-light d-flex gap-2 justify-content-end mb-2">
+                <button class="btn btn-sm btn-outline-danger px-3" id="viewBtn" disabled>View</button>
+                <button class="btn btn-sm btn-outline-secondary" id="removeBtn" disabled>Remove</button>
             </div>
         </div>
     </div>
 
+    <!-- Modal -->
+    <div class="modal fade" id="paymentModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="exampleModalLabel">Checkout Receipt</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+
+                </div>
+                <div class="modal-footer">
+                    <!-- <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button> -->
+                    <button type="button" class="btn btn-danger w-100" id="confirmBtn">Confirm Checkout</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="transactionModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="exampleModalLabel">Transaction Receipt</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="/js/custom.js"></script>
     <script>
         // Auto-update live time
         function updateTime() {
@@ -272,9 +177,11 @@ $date = date('F d, Y');
 
         // Sidebar toggle
         const sidebar = document.getElementById('sidebar');
+        const transaction = document.getElementById('transactionSideBar');
         const toggleBtn = document.getElementById('toggleSidebar');
         toggleBtn.addEventListener('click', () => {
             sidebar.classList.toggle('active');
+            transaction.classList.toggle('active');
         });
     </script>
 </body>

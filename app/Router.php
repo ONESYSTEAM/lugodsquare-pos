@@ -3,6 +3,7 @@
 namespace app;
 
 use app\Controllers\BookingController;
+use app\Controllers\POSCOntroller;
 use app\Controllers\UsersController;
 
 class Router
@@ -15,6 +16,17 @@ class Router
         Router::add('/', fn() => (new UsersController())->index());
         Router::add('/login', fn() => (new UsersController())->login($_POST['username'] ?? 0, $_POST['password'] ?? 0), 'POST');
         Router::add('/logout', fn() => (new UsersController())->logout());
+
+        Router::add('/Dashboard', fn() => (new POSCOntroller())->dashboard());
+
+        Router::add('/verify-membership', fn()=>(new POSCOntroller())->getMembershipCard(), 'POST');
+        Router::add('/cardPayment', fn() => (new POSCOntroller())->cardPayment(), 'POST');
+        Router::add('/confirm-transaction', fn() => (new POSController())->confirmTransaction(), 'POST');
+        Router::add('/undo-card-payment', fn() => (new POSCOntroller())->undoCardPayment(), 'POST');
+
+        Router::add('/verify-admin', fn() => (new POSCOntroller())->verifyAdmin(),'POST');
+        Router::add('/remove-transaction', fn() => (new POSCOntroller())->removeTransaction(), 'POST');
+        Router::add('/get-sales-items', fn() => (new POSCOntroller())->getSalesItems(), 'POST');
         
         Router::run();
     }

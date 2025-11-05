@@ -25,7 +25,7 @@ class UsersController
             exit;
         }
         if ($userId != 0) {
-            echo $GLOBALS['templates']->render('Dashboard');
+            header('Location: /Dashboard');
             exit;
         }
         if ($userType != 1) {
