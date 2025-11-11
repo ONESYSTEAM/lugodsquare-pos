@@ -167,18 +167,28 @@ $(document).ready(function () {
         });
         receiptHTML += `
                     </div>
-                    <hr>
-                    <div class="d-flex justify-content-between">
-                        <span>Sub-Total:</span>
-                        <span id="receiptSubTotal">₱${total.toFixed(2)}</span>
-                    </div>
-                    <div class="d-flex justify-content-between text-danger">
-                        <span>Discount:</span>
-                        <span id="receiptDiscount">₱${discountAmount.toFixed(2)}</span>
-                    </div>
+                    <hr>`;
+
+        // ✅ Only show subtotal/discount if there’s a difference (discount applied)
+        if (total !== finalTotal) {
+            receiptHTML += `
+        <div class="d-flex justify-content-between">
+            <span>Sub-Total:</span>
+            <span id="receiptSubTotal">₱${total.toFixed(2)}</span>
+        </div>`;
+            if (discountAmount > 0) {
+                receiptHTML += `
+            <div class="d-flex justify-content-between text-danger">
+                <span>Discount:</span>
+                <span id="receiptDiscount">₱${discountAmount.toFixed(2)}</span>
+            </div>`;
+            }
+        }
+
+        receiptHTML += `
                     <div class="d-flex justify-content-between fw-bold">
                         <span>Total:</span>
-                        <span id="receiptTotal">₱${finalTotal.toFixed(2)}</span>
+                        <span id="receiptTotal" class="fw-bold">₱${finalTotal.toFixed(2)}</span>
                     </div>
                     <div class="mt-3 row">
                         <label class="form-label" id="paymentOptionLbl">Cash Payment</label>
@@ -390,7 +400,7 @@ $(document).ready(function () {
     });
 
 
-    let memberCardNumber = "non-member";
+    let memberCardNumber = "N/A";
     let cardAmountPaid;
     let cardPaymentDone = false;
     $(document).on('change', '#cardPayment', function () {

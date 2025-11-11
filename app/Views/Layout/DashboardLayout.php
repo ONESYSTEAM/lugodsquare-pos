@@ -51,17 +51,41 @@ $date = date('F d, Y');
                 <p class="mb-1"><strong>Date:</strong> <?= $date ?></p>
                 <p class="mb-0"><strong>Time:</strong> <span id="live-time"></span></p>
             </div>
+            <div class="d-flex">
+                <div class="btn-group mb-2">
+                    <button class="btn btn-outline-danger btn-sm" id="food">Foods</button>
+                    <button class="btn btn-outline-danger btn-sm" id="merch">Merch</button>
+                </div>
 
-            <div class="row g-3">
+            </div>
+
+
+            <div class="row g-3 d-none" id="food-products">
                 <?php foreach ($products as $product): ?>
-                    <div class="col-6 col-md-4 col-lg-3">
-                        <div class="product-card">
-                            <img src="https://placehold.co/150" class="product-img" alt="<?= $product['product_name'] ?>">
-                            <h6 class="mt-2 mb-1"><?= $product['product_name'] ?></h6>
-                            <p class="text-danger mb-0">₱<?= number_format($product['price'], 2) ?></p>
-                            <small>Qty: <?= $product['qty'] ?></small>
+                    <?php if ($product['product_category'] === 'Foods'): ?>
+                        <div class="col-6 col-md-4 col-lg-3">
+                            <div class="product-card">
+                                <img src="https://placehold.co/150" class="product-img" alt="<?= $product['product_name'] ?>">
+                                <h6 class="mt-2 mb-1"><?= $product['product_name'] ?></h6>
+                                <p class="text-danger mb-0">₱<?= number_format($product['price'], 2) ?></p>
+                                <small>Qty: <?= $product['qty'] ?></small>
+                            </div>
                         </div>
-                    </div>
+                    <?php endif; ?>
+                <?php endforeach; ?>
+            </div>
+            <div class="row g-3 d-none" id="merch-products">
+                <?php foreach ($products as $product): ?>
+                    <?php if ($product['product_category'] === 'Merch'): ?>
+                        <div class="col-6 col-md-4 col-lg-3">
+                            <div class="product-card">
+                                <img src="https://placehold.co/150" class="product-img" alt="<?= $product['product_name'] ?>">
+                                <h6 class="mt-2 mb-1"><?= $product['product_name'] ?></h6>
+                                <p class="text-danger mb-0">₱<?= number_format($product['price'], 2) ?></p>
+                                <small>Qty: <?= $product['qty'] ?></small>
+                            </div>
+                        </div>
+                    <?php endif; ?>
                 <?php endforeach; ?>
             </div>
         </div>
@@ -79,17 +103,17 @@ $date = date('F d, Y');
                 <button class="btn btn-sm btn-outline-secondary" id="removeItemBtn" disabled>Remove Item</button>
             </div>
             <div class="bg-danger p-3">
-                <div class="mb-3">
-                    <div class="fw-bold text-light mb-2 ">Membership Card:</div>
+                <div class="mb-3 d-none" id="discountContainer">
+                    <div class="fw-bold text-light mb-2 ">Membership Card Discount:</div>
                     <div class="" id="membershipCard-con">
                         <input type="text" id="membershipCard" class="form-control" placeholder="Scan or enter card number">
                     </div>
                     <div class="mt-2 d-none" id="undoBtn-con">
                         <button class="btn btn-outline-light btn-sm" id="undoBtn">Undo Discount</button>
                     </div>
+                    <hr>
                 </div>
-                <hr>
-                <p class="text-light"><span id="subTotal"><small>Sub-Total: ₱0.00</small></span> <br> <small>Discount: ₱0.00</small> <br> <span class="fw-bold">Total: ₱0.00</span></p>
+                <p class="text-light"><span id="subTotal" class="d-none"><small>Sub-Total: ₱0.00</small></span><br class="br d-none"><small id="discount-span" class="d-none">Discount: ₱0.00</small> <br class="br d-none"> <span class="fw-bold">Total: ₱0.00</span></p>
 
                 <button class="btn btn-outline-light w-100 payment-btn" id="paymentBtn">Proceed to Payment</button>
             </div>
@@ -183,6 +207,32 @@ $date = date('F d, Y');
             sidebar.classList.toggle('active');
             transaction.classList.toggle('active');
         });
+
+        $(document).ready(function() {
+            $('#food').on('click', function() {
+                $('#food-products').removeClass('d-none');
+                $('#merch-products').addClass('d-none');
+                $('#merch').removeClass('btn-danger').addClass('btn-outline-danger');
+                $(this).addClass('btn-danger').removeClass('btn-outline-danger');
+                $('#discountContainer').addClass('d-none');
+                $('#discount-span').addClass('d-none');
+                $('.br').addClass('d-none');
+                $('#subTotal').addClass('d-none');
+            })
+        });
+        $(document).ready(function() {
+            $('#merch').on('click', function() {
+                $('#merch-products').removeClass('d-none');
+                $('#food-products').addClass('d-none');
+                $(this).addClass('btn-danger').removeClass('btn-outline-danger');
+                $('#food').removeClass('btn-danger').addClass('btn-outline-danger');
+                $('#discountContainer').removeClass('d-none');
+                $('#discount-span').removeClass('d-none');
+                $('.br').removeClass('d-none');
+                $('#subTotal').removeClass('d-none');
+
+            })
+        })
     </script>
 </body>
 
