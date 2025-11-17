@@ -23,7 +23,7 @@ $this->insert('Errors/Toasts');
                                 <input type="password" class="form-control form-control-lg" name="password" placeholder="Password">
                             </div>
                             <div class="mt-3 d-grid gap-2">
-                                <button type="submit" class="btn btn-block btn-primary btn-lg font-weight-medium auth-form-btn text-uppercase">Login</button>
+                                <button type="submit" class="btn btn-block btn-custom btn-lg font-weight-medium auth-form-btn text-uppercase">Login</button>
                             </div>
                         </form>
                     </div>

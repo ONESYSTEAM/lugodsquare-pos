@@ -5,7 +5,7 @@ namespace app\Models;
 use config\DBConnection;
 use PDO;
 
-class POSMOdel
+class POSModel
 {
     private $db;
 
@@ -14,7 +14,6 @@ class POSMOdel
         $this->db = $db->getConnection();
     }
 
-    // Add your custom methods below to interact with the database.
     public function getProducts()
     {
         $stmt = $this->db->prepare("SELECT * FROM products WHERE is_deleted = 0");
@@ -75,7 +74,6 @@ class POSMOdel
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
-
     public function insertSalesItem($orders, $saleId)
     {
         $stmt = $this->db->prepare("INSERT INTO sales_items (sale_id, item_name, qty, price, total) 
@@ -88,10 +86,10 @@ class POSMOdel
             $stmt->bindParam(':price', $order['price'], PDO::PARAM_STR);
             $stmt->bindParam(':total', $order['total'], PDO::PARAM_STR);
 
-            $stmt->execute(); // run each insert
+            $stmt->execute();
         }
 
-        return true; // ✅ return after all inserts
+        return true;
     }
 
     public function updateProductQty($productName, $newQty)
@@ -116,14 +114,6 @@ class POSMOdel
         $stmt->bindParam(':user_id', $_SESSION['user_id'], PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    public function getUserById($adminUsername)
-    {
-        $stmt = $this->db->prepare("SELECT * FROM users_tbl WHERE username = :user_id LIMIT 1");
-        $stmt->bindParam(':user_id', $adminUsername, PDO::PARAM_INT);
-        $stmt->execute();
-        return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
     public function deleteTransaction($saleId)

@@ -5,15 +5,6 @@ $this->start('mainContent');
 
 <div class="row g-3">
     <?php
-    $products = [
-        ['name' => 'Cheeseburger', 'price' => 120, 'image' => 'https://source.unsplash.com/400x300/?burger'],
-        ['name' => 'Pepperoni Pizza', 'price' => 350, 'image' => 'https://source.unsplash.com/400x300/?pizza'],
-        ['name' => 'Spaghetti Bolognese', 'price' => 180, 'image' => 'https://source.unsplash.com/400x300/?pasta'],
-        ['name' => 'Iced Coffee', 'price' => 90, 'image' => 'https://source.unsplash.com/400x300/?coffee'],
-        ['name' => 'Chicken Sandwich', 'price' => 150, 'image' => 'https://source.unsplash.com/400x300/?sandwich'],
-        ['name' => 'French Fries', 'price' => 70, 'image' => 'https://source.unsplash.com/400x300/?fries'],
-    ];
-
     foreach ($products as $product): ?>
         <div class="col-6 col-sm-6 col-md-4 col-lg-3">
             <div class="product-card" onclick="addToOrder('<?= $product['name'] ?>', <?= $product['price'] ?>)">

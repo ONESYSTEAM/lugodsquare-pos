@@ -1,16 +1,14 @@
 $(document).ready(function () {
     const orderList = $('.order-list .p-3');
-    const totalDisplay = $('.bg-danger p span.fw-bold');
+    const totalDisplay = $('.bg-custom p span.fw-bold');
     const subTotalDisplay = $('#subTotal small');
 
-    let orders = {}; // { "Burger": { qty: 2, price: 100 } }
+    let orders = {};
 
-    // Handle product card click
     $('.product-card').on('click', function () {
         const productName = $(this).find('h6').text().trim();
         const productPrice = parseFloat($(this).find('p').text().replace('₱', ''));
 
-        // If item exists, increase qty; else create new entry
         if (orders[productName]) {
             orders[productName].qty++;
         } else {
@@ -26,7 +24,6 @@ $(document).ready(function () {
         renderOrderList();
     });
 
-    // ✅ Render order list
     function renderOrderList() {
         orderList.empty();
         let subtotal = 0;
@@ -39,7 +36,7 @@ $(document).ready(function () {
                         <div class="order-item d-flex justify-content-between align-items-center mb-2 p-2 rounded" data-name="${name}">
                             <div class="d-flex flex-column">
                                 <span class="item-name">${item.qty}x ${name}</span>
-                                <small class="text-muted ps-1"> ₱${item.price.toFixed(2)} each</small>
+                                <small class="text-custom ps-1"> ₱${item.price.toFixed(2)}</small>
                             </div>
                             <div class="text-end">
                                 <strong>₱${totalItemPrice.toFixed(2)}</strong>
@@ -53,7 +50,6 @@ $(document).ready(function () {
 
     let selectedItem = null;
 
-    // Select order item
     orderList.on('click', '.order-item', function () {
         $('.order-item').removeClass('selected');
         $(this).addClass('selected');
@@ -63,7 +59,6 @@ $(document).ready(function () {
         $('#editItemBtn, #removeItemBtn').prop('disabled', false);
     });
 
-    // Deselect order item when clicking outside
     $(document).on('click', function (e) {
         const isInsideOrder = $(e.target).closest('.order-item').length > 0;
         const isActionButton = $(e.target).is('#editItemBtn, #removeItemBtn');
@@ -75,8 +70,6 @@ $(document).ready(function () {
         }
     });
 
-
-    // Edit item button
     $('#editItemBtn').on('click', function () {
         if (!selectedItem) return;
         Swal.fire({
@@ -93,7 +86,7 @@ $(document).ready(function () {
                 const newQty = parseInt(result.value);
                 if (!isNaN(newQty) && newQty > 0) {
                     orders[selectedItem].qty = newQty;
-                    renderOrderList(); // ✅ fixed
+                    renderOrderList();
                     $('#editItemBtn, #removeItemBtn').prop('disabled', true);
                     selectedItem = null;
                 }
@@ -101,7 +94,6 @@ $(document).ready(function () {
         });
     });
 
-    // Remove item button
     $('#removeItemBtn').on('click', function () {
         if (!selectedItem) return;
         Swal.fire({
@@ -113,15 +105,12 @@ $(document).ready(function () {
         }).then(result => {
             if (result.isConfirmed) {
                 delete orders[selectedItem];
-                renderOrderList(); // ✅ fixed
+                renderOrderList();
                 $('#editItemBtn, #removeItemBtn').prop('disabled', true);
                 selectedItem = null;
             }
         });
     });
-
-
-
 
     const paymentBtn = $('#paymentBtn');
     const modalBody = $('#paymentModal .modal-body');
@@ -134,7 +123,7 @@ $(document).ready(function () {
                 title: 'No items in order',
                 text: 'Please add items to the order before proceeding to payment.'
             });
-            return false; // stop here, don't open modal
+            return false;
         }
 
         let total = 0;
@@ -142,13 +131,11 @@ $(document).ready(function () {
             total += item.qty * item.price;
         });
 
-        // ✅ Check if discount is already applied in the summary
         let discountText = $('#subTotal').next('br').next('small').text().replace('Discount: ₱', '').trim();
         let discountAmount = parseFloat(discountText.replace(/,/g, '')) || 0;
         let finalTotal = total - discountAmount;
         let transaction_no = $('#transaction-number').text();
 
-        // ✅ Generate receipt HTML
         let receiptHTML = `
                     <div class="text-center mb-3">
                         <p class="mb-1 text-center" ><strong>Transaction No:</strong><span id="transactionNo">${transaction_no}</span></p>
@@ -169,7 +156,6 @@ $(document).ready(function () {
                     </div>
                     <hr>`;
 
-        // ✅ Only show subtotal/discount if there’s a difference (discount applied)
         if (total !== finalTotal) {
             receiptHTML += `
         <div class="d-flex justify-content-between">
@@ -197,10 +183,10 @@ $(document).ready(function () {
                             <input type="text" id="cardPayment" class="form-control d-none" placeholder="Scan or enter card number">
                         </div>
                         <div class="col-12 mt-2" id="paymentOptionBtn">
-                            <button class="btn btn-danger btn-sm" id="cardPaymentBtn">Pay Via Membership Card </button>
+                            <button class="btn btn-custom btn-sm" id="cardPaymentBtn">Pay Via Membership Card </button>
                         </div>
                         <div class="mt-2 d-none" id="undoPaymentCon">
-                            <button class="btn btn-danger btn-sm" id="undoPaymentBtn">Undo Card Payment</button>
+                            <button class="btn btn-custom btn-sm" id="undoPaymentBtn">Undo Card Payment</button>
                         </div>
                     </div>
                     <hr>
@@ -211,7 +197,6 @@ $(document).ready(function () {
 
         modalBody.html(receiptHTML);
 
-        // ✅ Change calculator (now respects discount)
         modalBody.on('input', '#amountPaid', function () {
             const paid = parseFloat($(this).val()) || 0;
             const currentTotal = parseFloat($('#receiptTotal').text().replace('₱', '').replace(/,/g, '')) || 0;
@@ -223,12 +208,10 @@ $(document).ready(function () {
         let scanTimeout = null;
 
         modalBody.on('keydown', '#amountPaid', function (e) {
-            // Prevent modal from closing when Enter is pressed
             if (e.key === 'Enter') {
                 e.preventDefault();
                 e.stopPropagation();
 
-                // Detect long, fast input sequence (likely a scan)
                 if (scanBuffer.length >= 8) {
                     Swal.fire({
                         icon: 'warning',
@@ -237,21 +220,18 @@ $(document).ready(function () {
                         confirmButtonText: 'OK'
                     });
 
-                    $(this).val(''); // clear input if mistaken scan
+                    $(this).val('');
                     $('#receiptChange').text('₱0.00');
 
                 }
 
-                // Reset buffer always after Enter
                 scanBuffer = '';
                 return;
             }
 
-            // Capture only normal characters
             if (e.key.length === 1) {
                 scanBuffer += e.key;
 
-                // Reset buffer if delay between keys is too long (human typing)
                 clearTimeout(scanTimeout);
                 scanTimeout = setTimeout(() => {
                     scanBuffer = '';
@@ -259,11 +239,8 @@ $(document).ready(function () {
             }
         });
 
-
-        // ✅ Finally, show the modal
         modal.show();
 
-        // ✅ Focus the amountPaid input after the modal is fully shown
         $('#paymentModal').on('shown.bs.modal', function () {
             $('#amountPaid').trigger('focus');
         });
@@ -287,9 +264,9 @@ $(document).ready(function () {
 
     function verifyMembership(cardNumber) {
         $.ajax({
-            url: '/verify-membership', // must point to your controller route
+            url: '/verify-membership',
             method: 'POST',
-            dataType: 'json', // ✅ ensure response is parsed as JSON
+            dataType: 'json',
             data: {
                 card_number: cardNumber
             },
@@ -300,23 +277,18 @@ $(document).ready(function () {
                         title: 'Membership verified!',
                         text: 'Discount applied.'
                     });
-                    // ✅ Apply discount logic here
-                    // ✅ Apply 10% discount logic
                     let subTotalText = $('#subTotal small').text().replace('Sub-Total: ₱', '').trim();
                     let subTotal = parseFloat(subTotalText.replace(/,/g, '')) || 0;
 
-                    let discountAmount = subTotal * 0.10; // 10% discount
+                    let discountAmount = subTotal * 0.10;
                     let total = subTotal - discountAmount;
 
-                    // ✅ Update the display
                     $('#subTotal small').text('Sub-Total: ₱' + subTotal.toFixed(2));
                     $('#subTotal').next('br').next('small').text('Discount: ₱' + discountAmount.toFixed(2));
                     $('#subTotal').parent().find('.fw-bold').text('Total: ₱' + total.toFixed(2));
 
                     $('#membershipCard').prop('disabled', true);;
                     $('#undoBtn-con').removeClass('d-none');
-
-
                 } else {
                     Swal.fire({
                         icon: 'error',
@@ -348,27 +320,22 @@ $(document).ready(function () {
             cancelButtonText: 'Cancel'
         }).then((result) => {
             if (result.isConfirmed) {
-                // ✅ Get current values
                 let totalText = $('#subTotal').parent().find('.fw-bold').text().replace('Total: ₱', '').trim();
                 let currentTotal = parseFloat(totalText.replace(/,/g, '')) || 0;
 
                 let discountText = $('#subTotal').next('br').next('small').text().replace('Discount: ₱', '').trim();
                 let discountAmount = parseFloat(discountText.replace(/,/g, '')) || 0;
 
-                // ✅ Compute original subtotal (before discount)
                 let originalSubTotal = currentTotal + discountAmount;
 
-                // ✅ Reset all displays
                 $('#subTotal small').text('Sub-Total: ₱' + originalSubTotal.toFixed(2));
                 $('#subTotal').next('br').next('small').text('Discount: ₱0.00');
                 $('#subTotal').parent().find('.fw-bold').text('Total: ₱' + originalSubTotal.toFixed(2));
 
-                // ✅ Re-enable membership input
                 $('#membershipCard').prop('disabled', false).val('');
                 $('#membershipCard-con').removeClass('col-9').addClass('col-12');
                 $('#undoBtn-con').addClass('d-none');
 
-                // ✅ Confirmation message
                 Swal.fire({
                     icon: 'success',
                     title: 'Discount removed',
@@ -384,21 +351,18 @@ $(document).ready(function () {
         const isCardMode = $('#cardPayment').is(':visible');
 
         if (isCardMode) {
-            // Switch back to cash input
             $('#cardPayment').addClass('d-none');
             $('#amountPaid').removeClass('d-none');
-            $(this).text('Pay with Card'); // button label (optional)
+            $(this).text('Pay with Card');
             $('#paymentOptionLbl').text('Cash Payment');
         } else {
-            // Switch to card payment input
             $('#amountPaid').addClass('d-none');
             $('#cardPayment').removeClass('d-none').trigger('focus');
-            $(this).text('Pay with Cash'); // button label (optional)
+            $(this).text('Pay with Cash');
             $('#paymentOptionLbl').text('Card Payment');
 
         }
     });
-
 
     let memberCardNumber = "N/A";
     let cardAmountPaid;
@@ -409,7 +373,7 @@ $(document).ready(function () {
         if (!cardNumber) return;
 
         $.ajax({
-            url: '/cardPayment', // your controller route
+            url: '/cardPayment',
             method: 'POST',
             dataType: 'json',
             data: {
@@ -425,7 +389,6 @@ $(document).ready(function () {
                         confirmButtonColor: '#3085d6'
                     });
 
-                    // Optional: auto-fill the amountPaid field for record
                     $('#cardPayment').val(`₱${response.amountPaid.toFixed(2)}`).prop('disabled', true);
                     $('#paymentOptionBtn').addClass('d-none');
                     $('#undoPaymentCon').removeClass('d-none');
@@ -436,7 +399,6 @@ $(document).ready(function () {
 
                     setCardPaymentDone(cardNumber, response.amountPaid);
 
-                    // Optional: show change if included
                     if (response.change !== undefined) {
                         $('#changeAmount').val('₱' + response.change.toFixed(2));
                     }
@@ -464,30 +426,26 @@ $(document).ready(function () {
         const cardPayment = $('#cardPayment').val()?.trim();
         const total = parseFloat($('#receiptTotal').text().replace('₱', '').replace(/,/g, '')) || 0;
 
-        // 🧾 Check if neither valid cash nor card payment is provided
         if ((!amountPaid || parseFloat(amountPaid) < total) && !cardPayment) {
             Swal.fire({
                 icon: 'warning',
                 title: 'Incomplete Payment',
                 text: 'Please enter a valid cash amount or provide card payment before confirming.',
             });
-            return; // ⛔ stop checkout
+            return;
         }
 
-        // ✅ proceed to confirm transaction
         confirmTransaction();
     });
 
 
     function confirmTransaction() {
-        // Collect data
-        const transactionNo = $('#transactionNo').text().trim(); // Example: from your receipt
+        const transactionNo = $('#transactionNo').text().trim();
         const subTotal = parseFloat($('#receiptSubTotal').text().replace('₱', '').replace(/,/g, '')) || 0;
         const discount = parseFloat($('#receiptDiscount').text().replace('₱', '').replace(/,/g, '')) || 0;
         const finalTotal = parseFloat($('#receiptTotal').text().replace('₱', '').replace(/,/g, '')) || 0;
         const paymentMode = $('#cardPayment').is(':visible') ? 'Card' : 'Cash';
 
-        // Collect orders (assuming you have them in your JS orders object)
         const orderData = [];
         $.each(orders, function (name, item) {
             orderData.push({
@@ -498,7 +456,6 @@ $(document).ready(function () {
             });
         });
 
-        // Confirm before submitting
         Swal.fire({
             title: 'Confirm Transaction?',
             text: 'This will finalize the sale.',
@@ -508,7 +465,6 @@ $(document).ready(function () {
             cancelButtonText: 'Cancel'
         }).then((result) => {
             if (result.isConfirmed) {
-                // Send to backend
                 $.ajax({
                     url: '/confirm-transaction',
                     method: 'POST',
@@ -532,7 +488,7 @@ $(document).ready(function () {
                                 showConfirmButton: false
                             }).then(() => {
                                 clearCardPaymentState();
-                                location.reload(); // Refresh page or redirect to summary
+                                location.reload();
                             });
                         } else {
                             Swal.fire({
@@ -580,7 +536,6 @@ $(document).ready(function () {
             },
             success: function (response) {
                 if (response.status === 'success') {
-                    // 🔁 Reset UI back to cash payment
                     $('#cardPayment').val('').addClass('d-none').prop('disabled', false);
                     $('#amountPaid').removeClass('d-none').val('');
                     $('#undoPaymentCon').addClass('d-none');
@@ -590,7 +545,6 @@ $(document).ready(function () {
 
                     cardPaymentDone = false;
                     clearCardPaymentState();
-
 
                     Swal.fire({
                         icon: 'success',
@@ -617,9 +571,8 @@ $(document).ready(function () {
         });
     }
 
-    // Detect close button click on modal
     $(document).on('click', '#paymentModal .btn-close', function (e) {
-        e.preventDefault(); // prevent modal from immediately closing
+        e.preventDefault();
 
         if (cardPaymentDone) {
             Swal.fire({
@@ -634,7 +587,6 @@ $(document).ready(function () {
                     undoCardPayment();
                     clearCardPaymentState();
                 } else {
-                    // Keep or re-show modal if user clicks "No, go back"
                     $('#paymentModal').modal('show');
                 }
             });
@@ -650,28 +602,24 @@ $(document).ready(function () {
                 if (result.isConfirmed) {
                     $('#paymentModal').modal('hide');
                 } else {
-                    // Keep or re-show modal if user clicks "No, go back"
                     $('#paymentModal').modal('show');
                 }
             });
         }
     });
 
-    // ✅ Save payment state (when card payment succeeds)
     function setCardPaymentDone(cardNumber, amountPaid) {
         sessionStorage.setItem('cardPaymentDone', 'true');
         sessionStorage.setItem('memberCardNumber', cardNumber);
         sessionStorage.setItem('cardAmountPaid', amountPaid);
     }
 
-    // ✅ Clear payment state (when checkout finishes or is undone)
     function clearCardPaymentState() {
         sessionStorage.removeItem('cardPaymentDone');
         sessionStorage.removeItem('memberCardNumber');
         sessionStorage.removeItem('cardAmountPaid');
     }
 
-    // native beforeunload (keeps browser native dialog)
     window.addEventListener('beforeunload', function (e) {
         if (sessionStorage.getItem('cardPaymentDone') === 'true') {
             const msg = 'A card payment was processed. Reloading will reset the transaction and refund the wallet.';
@@ -679,16 +627,13 @@ $(document).ready(function () {
             e.returnValue = msg;
             return msg;
         }
-        // no return -> no prompt
     });
 
-    // On page load, check if a pending card payment exists and show Swal
     $(window).on('load', function () {
         if (sessionStorage.getItem('cardPaymentDone') === 'true') {
             const pendingCard = sessionStorage.getItem('memberCardNumber') || '';
             const pendingAmount = parseFloat(sessionStorage.getItem('cardAmountPaid') || '0') || 0;
 
-            // 🟡 Automatically refund and notify
             $.ajax({
                 url: '/undo-card-payment',
                 method: 'POST',
@@ -706,7 +651,7 @@ $(document).ready(function () {
                             text: 'A previous card payment was detected and has been refunded for your security.',
                             confirmButtonColor: '#3085d6',
                         }).then(() => {
-                            $('#paymentModal').modal('hide'); // ensure modal is closed
+                            $('#paymentModal').modal('hide');
                         });
                     } else {
                         Swal.fire({
@@ -731,7 +676,6 @@ $(document).ready(function () {
 
     let selectedTransaction = null;
 
-    // 🔹 Open Order Summary sidebar
     $('#orderSumBtn').on('click', function () {
         $('#transactionSideBar').addClass('d-none');
         $('#sidebar').removeClass('d-none');
@@ -739,7 +683,6 @@ $(document).ready(function () {
         $(this).addClass('d-none');
     });
 
-    // 🔹 Open transaction sidebar
     $('#transactionBtn').on('click', function () {
         $('#transactionSideBar').removeClass('d-none');
         $('#sidebar').addClass('d-none');
@@ -747,7 +690,6 @@ $(document).ready(function () {
         $(this).addClass('d-none');
     });
 
-    // 🔹 When user clicks a transaction item
     $(document).on('click', '.transaction-item', function () {
         $('.transaction-item').removeClass('selected');
         $(this).addClass('selected');
@@ -760,7 +702,6 @@ $(document).ready(function () {
         }
     });
 
-    // 🔹 Deselect transaction if user clicks outside
     $(document).on('click', function (e) {
         const isInsideTransaction = $(e.target).closest('.transaction-item').length > 0;
         const isActionButton = $(e.target).is('#viewBtn, #removeBtn');
@@ -771,24 +712,18 @@ $(document).ready(function () {
             $('#viewBtn, #removeBtn').prop('disabled', true);
         }
     });
-    // 🔹 View Transaction (show modal and load details)
     $('#viewBtn').on('click', function () {
-        // Get the transaction number from the selected list item
         const transactionNumber = $('.transaction-list .d-flex.bg-primary')
             .find('.transaction-number')
             .text()
             .trim();
 
-        // Show modal
         $('#transactionModal').modal('show');
 
-        // Show loading message
         $('.modal-body').html('<p class="text-center text-muted">Loading transaction details...</p>');
 
-        // Disable the confirm button until loaded
         $('#confirmBtn').prop('disabled', true);
 
-        // 🔹 Fetch transaction details via AJAX
         $.ajax({
             url: '/get-sales-items',
             method: 'POST',
@@ -853,13 +788,10 @@ $(document).ready(function () {
 
     });
 
-
-    // 🔹 Remove Transaction (requires admin ID)
     $('#removeBtn').on('click', function () {
         let saleId = selectedTransaction;
 
         $(document).off('click.transactionDeselect');
-        // e.stopPropagation();
         Swal.fire({
             title: 'Admin Verification Required',
             input: 'password',
@@ -873,7 +805,7 @@ $(document).ready(function () {
             showLoaderOnConfirm: true,
             preConfirm: (adminId) => {
                 return $.ajax({
-                    url: '/verify-admin', // 👈 backend route to check admin
+                    url: '/verify-admin',
                     method: 'POST',
                     dataType: 'json',
                     data: {
@@ -883,7 +815,7 @@ $(document).ready(function () {
                     if (!response.valid) {
                         throw new Error(response.message || 'Invalid admin ID');
                     }
-                    return response; // ✅ valid admin
+                    return response;
                 }).catch(error => {
                     Swal.showValidationMessage(error.message || 'Verification failed. Please try again.');
                 });
@@ -891,7 +823,6 @@ $(document).ready(function () {
             allowOutsideClick: () => !Swal.isLoading()
         }).then((result) => {
             if (result.isConfirmed) {
-                // Proceed to remove transaction
                 $.ajax({
                     url: '/remove-transaction',
                     method: 'POST',
@@ -903,7 +834,6 @@ $(document).ready(function () {
                         if (res.status === 'success') {
                             let alertMsg = `Transaction <b>${res.transactionNum}</b> has been deleted.`;
 
-                            // 🔹 If refund happened, append refund info in bold on new line
                             if (res.refund) {
                                 alertMsg += `<br><br><b>Wallet refund:</b> ₱${res.refund.amount} refunded to ${res.refund.member_name}<br><b>Card Number: </b>${res.refund.membership_id}`;
                             }
@@ -911,7 +841,7 @@ $(document).ready(function () {
                             Swal.fire({
                                 icon: 'success',
                                 title: 'Transaction Removed',
-                                html: alertMsg, // ✅ use 'html' instead of 'text'
+                                html: alertMsg,
                                 confirmButtonText: 'OK'
                             }).then(() => {
                                 location.reload();

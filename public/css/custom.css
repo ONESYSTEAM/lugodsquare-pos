@@ -10,9 +10,37 @@ body {
     overflow: hidden;
 }
 
-/* HEADER */
+.btn-custom {
+    background-color: #0e2c0d !important;
+    color: #fff;
+}
+
+.bg-custom {
+    background-color: #0e2c0d !important;
+    color: #fff;
+}
+
+.btn-custom:hover {
+    background-color: #236321 !important;
+    color: #fff;
+}
+
+.btn-outline-custom {
+    border: 1px solid #236321 !important;
+    color: #236321;
+}
+
+.btn-outline-custom:hover {
+    background: #236321 !important;
+    color: #fff;
+}
+
+.text-custom {
+    color: #236321;
+}
+
 .pos-header {
-    background: #dc3545;
+    background: #0e2c0d;
     color: #fff;
     padding: 15px;
     display: flex;
@@ -25,14 +53,12 @@ body {
     margin: 0;
 }
 
-/* MAIN CONTAINER */
 .pos-container {
     display: flex;
     height: calc(100vh - 70px);
     overflow: hidden;
 }
 
-/* PRODUCTS */
 .pos-products {
     flex: 3;
     padding: 15px;
@@ -62,7 +88,6 @@ body {
     border-radius: 6px;
 }
 
-/* SIDEBAR */
 .pos-sidebar {
     flex: 1;
     background: #fff;
@@ -77,7 +102,6 @@ body {
     flex-grow: 1;
     overflow-y: auto;
     padding-right: 5px;
-    /* Space for button */
 }
 
 .order-list::-webkit-scrollbar {
@@ -88,12 +112,13 @@ body {
     background-color: #ccc;
     border-radius: 10px;
 }
+
 .transaction-list {
     flex-grow: 1;
     overflow-y: auto;
     padding-right: 5px;
-    /* Space for button */
 }
+
 .transaction-list::-webkit-scrollbar {
     width: 6px;
 }
@@ -114,7 +139,6 @@ body {
     z-index: 5;
 }
 
-/* COLLAPSIBLE SIDEBAR (MOBILE) */
 @media (max-width: 991px) {
     .pos-container {
         flex-direction: row;
@@ -145,7 +169,7 @@ body {
 
     .toggle-sidebar-btn {
         background: #fff;
-        color: #dc3545;
+        color: #236321;
         border: none;
         font-weight: bold;
         padding: 5px 10px;
@@ -192,15 +216,19 @@ body {
 }
 
 .order-item.selected {
-    background-color: #ffe6e6;
-    border: 2px solid #dc3545;
+    background-color: #236321;
+    color: #fff;
+}
+
+.order-item.selected small {
+    color: #fff;
 }
 
 .transaction-item {
     cursor: pointer;
     transition: background-color 0.2s ease;
     border-radius: 8px;
-    padding: 8px;   
+    padding: 8px;
 }
 
 .transaction-item:hover {
@@ -208,6 +236,6 @@ body {
 }
 
 .transaction-item.selected {
-    background-color: #ffe6e6;
-    border: 2px solid #dc3545;
+    background-color: #236321;
+    color: #fff;
 }

@@ -5,7 +5,7 @@ namespace app\Controllers;
 use config\DBConnection;
 use app\Models\POSModel;
 
-class POSCOntroller
+class POSController
 {
     private $POSModel;
 
@@ -15,7 +15,6 @@ class POSCOntroller
         $this->POSModel = new POSModel($db);
     }
 
-    // Add your custom controllers below to handle business logic.
     public function dashboard()
     {
         $userId = $_SESSION['user_id'] ?? '';
@@ -32,18 +31,16 @@ class POSCOntroller
     public function getMembershipCard()
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            header('Content-Type: application/json'); // ✅ helps AJAX parse response properly
+            header('Content-Type: application/json');
 
             $CardNumber = $_POST['card_number'] ?? '';
             $memberCards = $this->POSModel->getMembershipCards();
 
-            // Safety: ensure it's iterable
             if (!is_array($memberCards)) {
                 echo json_encode(['status' => 'error', 'message' => 'Invalid data from model']);
                 return;
             }
 
-            // Check if card exists
             foreach ($memberCards as $card) {
                 if (isset($card['card_number']) && $card['card_number'] === $CardNumber) {
                     echo json_encode(['status' => 'success', 'is_valid' => true]);
@@ -51,7 +48,6 @@ class POSCOntroller
                 }
             }
 
-            // Not found
             echo json_encode(['status' => 'error', 'message' => 'Card not found']);
             return;
         }
@@ -63,7 +59,6 @@ class POSCOntroller
             $cardNumber = $_POST['cardNumber'];
             $total = floatval($_POST['total']);
 
-            // Fetch wallet info
             $wallet = $this->POSModel->getWalletBalance($cardNumber);
             if ($wallet) {
                 $balance = floatval($wallet['wallet']);
@@ -124,7 +119,6 @@ class POSCOntroller
                 }
             }
 
-            // ❌ If something failed
             echo json_encode([
                 'status' => 'error',
                 'message' => 'Failed to confirm transaction.',
@@ -176,10 +170,8 @@ class POSCOntroller
 
             $sale_id = $_POST['sale_id'] ?? '';
 
-            // Get the sales items for this transaction
             $salesItems = $this->POSModel->getSalesItems($sale_id);
 
-            // Restore product quantities
             foreach ($salesItems as $item) {
                 $product = $this->POSModel->getProductByName($item['item_name']);
                 if ($product) {
@@ -188,11 +180,9 @@ class POSCOntroller
                 }
             }
 
-            // Get transaction details
             $transaction = $this->POSModel->getSalesDetails($sale_id);
             $refundInfo = null;
 
-            // ✅ If payment mode is via card, refund the wallet
             if (
                 isset($transaction['payment_method'], $transaction['membership_card']) &&
                 strtolower($transaction['payment_method']) === 'card' &&
@@ -215,7 +205,6 @@ class POSCOntroller
                 }
             }
 
-            // Delete the transaction and related sales items
             if ($this->POSModel->deleteTransaction($sale_id)) {
                 echo json_encode([
                     'status' => 'success',
@@ -236,7 +225,6 @@ class POSCOntroller
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $sale_id = $_POST['sale_id'] ?? '';
 
-            // Get the sales items for this transaction
             $salesItems = $this->POSModel->getSalesItems($sale_id);
             $salesDetails = $this->POSModel->getSalesDetails($sale_id);
 

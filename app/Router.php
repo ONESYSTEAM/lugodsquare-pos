@@ -17,16 +17,16 @@ class Router
         Router::add('/login', fn() => (new UsersController())->login($_POST['username'] ?? 0, $_POST['password'] ?? 0), 'POST');
         Router::add('/logout', fn() => (new UsersController())->logout());
 
-        Router::add('/Dashboard', fn() => (new POSCOntroller())->dashboard());
+        Router::add('/Dashboard', fn() => (new POSController())->dashboard());
 
-        Router::add('/verify-membership', fn()=>(new POSCOntroller())->getMembershipCard(), 'POST');
-        Router::add('/cardPayment', fn() => (new POSCOntroller())->cardPayment(), 'POST');
+        Router::add('/verify-membership', fn()=>(new POSController())->getMembershipCard(), 'POST');
+        Router::add('/cardPayment', fn() => (new POSController())->cardPayment(), 'POST');
         Router::add('/confirm-transaction', fn() => (new POSController())->confirmTransaction(), 'POST');
-        Router::add('/undo-card-payment', fn() => (new POSCOntroller())->undoCardPayment(), 'POST');
+        Router::add('/undo-card-payment', fn() => (new POSController())->undoCardPayment(), 'POST');
 
-        Router::add('/verify-admin', fn() => (new POSCOntroller())->verifyAdmin(),'POST');
-        Router::add('/remove-transaction', fn() => (new POSCOntroller())->removeTransaction(), 'POST');
-        Router::add('/get-sales-items', fn() => (new POSCOntroller())->getSalesItems(), 'POST');
+        Router::add('/verify-admin', fn() => (new POSController())->verifyAdmin(),'POST');
+        Router::add('/remove-transaction', fn() => (new POSController())->removeTransaction(), 'POST');
+        Router::add('/get-sales-items', fn() => (new POSController())->getSalesItems(), 'POST');
         
         Router::run();
     }
