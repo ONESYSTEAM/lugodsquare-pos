@@ -30,40 +30,25 @@ class Router
         Router::run();
     }
 
-    public static function add($path, $callback, $method = 'GET')
+    public static function add($path, $callback)
     {
         $path = str_replace(['{', '}'], ['(?P<', '>[^/]+)'], $path);
 
-        self::$routes[] = [
-            'path' => $path,
-            'callback' => $callback,
-            'method' => strtoupper($method)
-        ];
+        Router::$routes[$path] = $callback;
     }
 
     public static function run()
     {
         $requestUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-        $requestMethod = strtoupper($_SERVER['REQUEST_METHOD']);
 
-        foreach (self::$routes as $route) {
+        foreach (self::$routes as $route => $callback) {
+            if (preg_match("#^$route$#", $requestUri, $matches)) {
+                $params = array_filter($matches, 'is_string', ARRAY_FILTER_USE_KEY);
+                echo call_user_func($callback, $params);
 
-            if ($route['method'] !== $requestMethod) {
-                continue;
-            }
-
-            if (preg_match("#^{$route['path']}$#", $requestUri, $matches)) {
-                $params = array_filter(
-                    $matches,
-                    'is_string',
-                    ARRAY_FILTER_USE_KEY
-                );
-
-                echo call_user_func($route['callback'], $params);
                 return;
             }
         }
-
         echo template()->render('Errors/404');
     }
 
