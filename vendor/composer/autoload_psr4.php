@@ -8,5 +8,6 @@ $baseDir = dirname($vendorDir);
 return array(
     'config\\' => array($baseDir . '/config'),
     'app\\' => array($baseDir . '/app'),
+    'Mike42\\' => array($vendorDir . '/mike42/escpos-php/src/Mike42', $vendorDir . '/mike42/gfx-php/src/Mike42'),
     'League\\Plates\\' => array($vendorDir . '/league/plates/src'),
 );

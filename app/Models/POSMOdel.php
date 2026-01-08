@@ -52,10 +52,18 @@ class POSModel
         return $stmt->execute();
     }
 
-    public function insertTransaction($transactionNo, $subTotal, $discount, $finalTotal, $paymentMethod, $userId, $cardNumber)
+    public function insertTransaction($transactionNo, $subTotal, $discount, $finalTotal, $paymentMethod, $userId, $cardNumber, $cashAmount = null, $cashChange = null)
     {
-        $stmt = $this->db->prepare("INSERT INTO sales (transaction_no, sub_total, discount, membership_card, final_total, payment_method, created_at, user_id)
-                                    VALUES (:transaction_no, :sub_total, :discount, :card_number, :final_total, :payment_method, NOW(), :user_id)");
+        $stmt = $this->db->prepare("
+        INSERT INTO sales (
+            transaction_no, sub_total, discount, membership_card, final_total,
+            payment_method, cash_amount, cash_change, created_at, user_id
+        ) VALUES (
+            :transaction_no, :sub_total, :discount, :card_number, :final_total,
+            :payment_method, :cash_amount, :cash_change, NOW(), :user_id
+        )
+    ");
+
         $stmt->bindParam(':transaction_no', $transactionNo, PDO::PARAM_STR);
         $stmt->bindParam(':sub_total', $subTotal, PDO::PARAM_STR);
         $stmt->bindParam(':discount', $discount, PDO::PARAM_STR);
@@ -63,8 +71,13 @@ class POSModel
         $stmt->bindParam(':payment_method', $paymentMethod, PDO::PARAM_STR);
         $stmt->bindParam(':card_number', $cardNumber, PDO::PARAM_STR);
         $stmt->bindParam(':user_id', $userId, PDO::PARAM_INT);
+
+        $stmt->bindValue(':cash_amount', $cashAmount !== null ? number_format((float)$cashAmount, 2, '.', '') : null);
+        $stmt->bindValue(':cash_change', $cashChange !== null ? number_format((float)$cashChange, 2, '.', '') : null);
+
         return $stmt->execute();
     }
+
 
     public function getSalesIdByTransactionNo($transactionNo)
     {
@@ -135,6 +148,30 @@ class POSModel
     {
         $stmt = $this->db->prepare("SELECT * FROM sales WHERE id = :sale_id");
         $stmt->bindParam(':sale_id', $saleId, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function getSaleByTransactionNo($transactionNo)
+    {
+        $stmt = $this->db->prepare("SELECT * FROM sales WHERE transaction_no = :transaction_no LIMIT 1");
+        $stmt->bindParam(':transaction_no', $transactionNo, PDO::PARAM_STR);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function getCashierByUserId($userId)
+    {
+        $stmt = $this->db->prepare("SELECT first_name, last_name FROM users WHERE id = :id LIMIT 1");
+        $stmt->bindParam(':id', $userId, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function getUserById($id)
+    {
+        $stmt = $this->db->prepare("SELECT * FROM users WHERE id = :id LIMIT 1");
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }

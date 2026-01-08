@@ -8,7 +8,8 @@
         "league/plates": "^3.6",
         "dalira-php/model": "^1.0",
         "dalira-php/controller": "^1.0",
-        "dalira-php/view": "^1.0"
+        "dalira-php/view": "^1.0",
+        "mike42/escpos-php": "^4.0"
     },
     "autoload": {
         "psr-4": {

@@ -15,6 +15,10 @@ class ComposerStaticInita954e09c5d63b95fcf6f198a27b8b996
         array (
             'app\\' => 4,
         ),
+        'M' => 
+        array (
+            'Mike42\\' => 7,
+        ),
         'L' => 
         array (
             'League\\Plates\\' => 14,
@@ -29,6 +33,11 @@ class ComposerStaticInita954e09c5d63b95fcf6f198a27b8b996
         'app\\' => 
         array (
             0 => __DIR__ . '/../..' . '/app',
+        ),
+        'Mike42\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/mike42/escpos-php/src/Mike42',
+            1 => __DIR__ . '/..' . '/mike42/gfx-php/src/Mike42',
         ),
         'League\\Plates\\' => 
         array (

@@ -5,6 +5,16 @@ $(document).ready(function () {
 
     let orders = {};
 
+    // ✅ helper: trigger server-side printing
+    function triggerPrint(printUrl) {
+        if (!printUrl) return Promise.resolve({ status: 'skip' });
+
+        // use fetch (GET) so it hits /print-receipt?transaction_no=...
+        return fetch(printUrl, { method: 'GET' })
+            .then(r => r.json())
+            .catch(err => ({ status: 'error', message: err?.message || 'Print request failed' }));
+    }
+
     $('.product-card').on('click', function () {
         const productName = $(this).find('h6').text().trim();
         const productPrice = parseFloat($(this).find('p').text().replace('₱', ''));
@@ -197,7 +207,7 @@ $(document).ready(function () {
 
         modalBody.html(receiptHTML);
 
-        modalBody.on('input', '#amountPaid', function () {
+        modalBody.off('input', '#amountPaid').on('input', '#amountPaid', function () {
             const paid = parseFloat($(this).val()) || 0;
             const currentTotal = parseFloat($('#receiptTotal').text().replace('₱', '').replace(/,/g, '')) || 0;
             const change = paid - currentTotal;
@@ -207,7 +217,7 @@ $(document).ready(function () {
         let scanBuffer = '';
         let scanTimeout = null;
 
-        modalBody.on('keydown', '#amountPaid', function (e) {
+        modalBody.off('keydown', '#amountPaid').on('keydown', '#amountPaid', function (e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
                 e.stopPropagation();
@@ -222,7 +232,6 @@ $(document).ready(function () {
 
                     $(this).val('');
                     $('#receiptChange').text('₱0.00');
-
                 }
 
                 scanBuffer = '';
@@ -267,9 +276,7 @@ $(document).ready(function () {
             url: '/verify-membership',
             method: 'POST',
             dataType: 'json',
-            data: {
-                card_number: cardNumber
-            },
+            data: { card_number: cardNumber },
             success: function (response) {
                 if (response.status === 'success' && response.is_valid) {
                     Swal.fire({
@@ -287,7 +294,7 @@ $(document).ready(function () {
                     $('#subTotal').next('br').next('small').text('Discount: ₱' + discountAmount.toFixed(2));
                     $('#subTotal').parent().find('.fw-bold').text('Total: ₱' + total.toFixed(2));
 
-                    $('#membershipCard').prop('disabled', true);;
+                    $('#membershipCard').prop('disabled', true);
                     $('#undoBtn-con').removeClass('d-none');
                 } else {
                     Swal.fire({
@@ -303,11 +310,10 @@ $(document).ready(function () {
                     title: 'Server Error',
                     text: 'Error verifying membership. Please try again.'
                 });
-
-                console.log(cardNumber)
             }
         });
     }
+
     $('#undoBtn').on('click', function () {
         Swal.fire({
             title: 'Undo Discount?',
@@ -360,13 +366,13 @@ $(document).ready(function () {
             $('#cardPayment').removeClass('d-none').trigger('focus');
             $(this).text('Pay with Cash');
             $('#paymentOptionLbl').text('Card Payment');
-
         }
     });
 
     let memberCardNumber = "N/A";
     let cardAmountPaid;
     let cardPaymentDone = false;
+
     $(document).on('change', '#cardPayment', function () {
         const cardNumber = $(this).val().trim();
         const totalAmount = parseFloat($('#receiptTotal').text().replace('₱', '').replace(/,/g, '')) || 0;
@@ -376,10 +382,7 @@ $(document).ready(function () {
             url: '/cardPayment',
             method: 'POST',
             dataType: 'json',
-            data: {
-                cardNumber: cardNumber,
-                total: totalAmount
-            },
+            data: { cardNumber: cardNumber, total: totalAmount },
             success: function (response) {
                 if (response.success) {
                     Swal.fire({
@@ -394,7 +397,7 @@ $(document).ready(function () {
                     $('#undoPaymentCon').removeClass('d-none');
 
                     memberCardNumber = cardNumber;
-                    cardAmountPaid = response.amountPaid
+                    cardAmountPaid = response.amountPaid;
                     cardPaymentDone = true;
 
                     setCardPaymentDone(cardNumber, response.amountPaid);
@@ -438,13 +441,46 @@ $(document).ready(function () {
         confirmTransaction();
     });
 
-
     function confirmTransaction() {
         const transactionNo = $('#transactionNo').text().trim();
-        const subTotal = parseFloat($('#receiptSubTotal').text().replace('₱', '').replace(/,/g, '')) || 0;
-        const discount = parseFloat($('#receiptDiscount').text().replace('₱', '').replace(/,/g, '')) || 0;
+
+        // guard: if these elements don't exist (no discount case), fallback to sidebar totals
+        const subTotalEl = $('#receiptSubTotal');
+        const discountEl = $('#receiptDiscount');
+
+        const subTotal = subTotalEl.length
+            ? (parseFloat(subTotalEl.text().replace('₱', '').replace(/,/g, '')) || 0)
+            : (parseFloat($('#subTotal small').text().replace('Sub-Total: ₱', '').replace(/,/g, '')) || 0);
+
+        const discount = discountEl.length
+            ? (parseFloat(discountEl.text().replace('₱', '').replace(/,/g, '')) || 0)
+            : (parseFloat($('#subTotal').next('br').next('small').text().replace('Discount: ₱', '').replace(/,/g, '')) || 0);
+
         const finalTotal = parseFloat($('#receiptTotal').text().replace('₱', '').replace(/,/g, '')) || 0;
         const paymentMode = $('#cardPayment').is(':visible') ? 'Card' : 'Cash';
+
+        // ✅ NEW: cash amount & change
+        let cashAmount = null;
+        let cashChange = null;
+
+        if (paymentMode === 'Cash') {
+            cashAmount = parseFloat($('#amountPaid').val()) || 0;
+
+            const chTextRaw = ($('#receiptChange').text() || '').trim();
+            const chText = chTextRaw.replace('₱', '').replace(/,/g, '').trim();
+
+            // If UI shows "Insufficient", block confirmation
+            if (chTextRaw.toLowerCase().includes('insufficient')) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Insufficient Cash',
+                    text: 'Please enter an amount equal or greater than the total.'
+                });
+                return;
+            }
+
+            cashChange = parseFloat(chText) || 0;
+        }
 
         const orderData = [];
         $.each(orders, function (name, item) {
@@ -476,20 +512,40 @@ $(document).ready(function () {
                         discount: discount,
                         final_total: finalTotal,
                         payment_mode: paymentMode,
-                        card_number: memberCardNumber
+                        card_number: memberCardNumber,
+
+                        // ✅ SEND TO BACKEND
+                        cash_amount: cashAmount,
+                        cash_change: cashChange
                     },
                     success: function (response) {
                         if (response.status === 'success') {
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'Transaction Confirmed!',
-                                text: 'Sale successfully recorded.',
-                                timer: 1800,
-                                showConfirmButton: false
-                            }).then(() => {
-                                clearCardPaymentState();
-                                location.reload();
+
+                            // ✅ PRINT AFTER SUCCESS (wait for print result, then reload)
+                            triggerPrint(response.print_url).then((printRes) => {
+                                if (printRes && printRes.status === 'success') {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Transaction Confirmed!',
+                                        text: 'Sale recorded and receipt printed.',
+                                        timer: 1500,
+                                        showConfirmButton: false
+                                    }).then(() => {
+                                        clearCardPaymentState();
+                                        location.reload();
+                                    });
+                                } else {
+                                    Swal.fire({
+                                        icon: 'warning',
+                                        title: 'Transaction Saved',
+                                        text: 'Sale recorded, but printing failed. ' + (printRes?.message ? ('(' + printRes.message + ')') : ''),
+                                    }).then(() => {
+                                        clearCardPaymentState();
+                                        location.reload();
+                                    });
+                                }
                             });
+
                         } else {
                             Swal.fire({
                                 icon: 'error',
@@ -509,6 +565,7 @@ $(document).ready(function () {
             }
         });
     }
+
 
     $(document).on('click', '#undoPaymentBtn', function () {
         Swal.fire({
@@ -712,6 +769,7 @@ $(document).ready(function () {
             $('#viewBtn, #removeBtn').prop('disabled', true);
         }
     });
+
     $('#viewBtn').on('click', function () {
         const transactionNumber = $('.transaction-list .d-flex.bg-primary')
             .find('.transaction-number')
