@@ -1,5 +1,5 @@
 <?php
-
+date_default_timezone_set('Asia/Manila');
 session_start();
 
 require __DIR__ . '/../vendor/autoload.php';

@@ -46,7 +46,7 @@ class POSModel
 
     public function updateWallet($cardNumber, $balance)
     {
-        $stmt = $this->db->prepare("UPDATE members SET wallet = :wallet_balance WHERE card_number = :card_number");
+        $stmt = $this->db->prepare("UPDATE members SET wallet = :wallet_balance, synced = 0 WHERE card_number = :card_number");
         $stmt->bindParam(':wallet_balance', $balance, PDO::PARAM_STR);
         $stmt->bindParam(':card_number', $cardNumber, PDO::PARAM_STR);
         return $stmt->execute();
@@ -54,13 +54,10 @@ class POSModel
 
     public function insertTransaction($transactionNo, $subTotal, $discount, $finalTotal, $paymentMethod, $userId, $cardNumber, $cashAmount = null, $cashChange = null)
     {
-        $stmt = $this->db->prepare("
-        INSERT INTO sales (
-            transaction_no, sub_total, discount, membership_card, final_total,
-            payment_method, cash_amount, cash_change, created_at, user_id
-        ) VALUES (
-            :transaction_no, :sub_total, :discount, :card_number, :final_total,
-            :payment_method, :cash_amount, :cash_change, NOW(), :user_id
+        $stmt = $this->db->prepare("INSERT INTO sales (transaction_no, sub_total, discount, membership_card, final_total,
+            payment_method, cash_amount, cash_change, created_at, user_id, synced) 
+            VALUES (:transaction_no, :sub_total, :discount, :card_number, :final_total,
+            :payment_method, :cash_amount, :cash_change, NOW(), :user_id, 0
         )
     ");
 
@@ -78,7 +75,6 @@ class POSModel
         return $stmt->execute();
     }
 
-
     public function getSalesIdByTransactionNo($transactionNo)
     {
         $stmt = $this->db->prepare("SELECT id FROM sales WHERE transaction_no = :transaction_no LIMIT 1");
@@ -89,8 +85,8 @@ class POSModel
 
     public function insertSalesItem($orders, $saleId)
     {
-        $stmt = $this->db->prepare("INSERT INTO sales_items (sale_id, item_name, qty, price, total) 
-                                VALUES (:sale_id, :item_name, :qty, :price, :total)");
+        $stmt = $this->db->prepare("INSERT INTO sales_items (sale_id, item_name, qty, price, total, synced) 
+                                    VALUES (:sale_id, :item_name, :qty, :price, :total, 0)");
 
         foreach ($orders as $order) {
             $stmt->bindParam(':sale_id', $saleId, PDO::PARAM_INT);
@@ -107,7 +103,7 @@ class POSModel
 
     public function updateProductQty($productName, $newQty)
     {
-        $stmt = $this->db->prepare("UPDATE products SET qty = :qty WHERE product_name = :product_name");
+        $stmt = $this->db->prepare("UPDATE products SET qty = :qty, synced = 0 WHERE product_name = :product_name");
         $stmt->bindParam(':qty', $newQty, PDO::PARAM_INT);
         $stmt->bindParam(':product_name', $productName, PDO::PARAM_STR);
         return $stmt->execute();
@@ -123,15 +119,18 @@ class POSModel
 
     public function getTransactionHistory()
     {
-        $stmt = $this->db->prepare("SELECT * FROM sales WHERE user_id = :user_id ORDER BY created_at DESC");
+        // Added WHERE is_deleted = 0 so deleted sales don't show up in history
+        $stmt = $this->db->prepare("SELECT * FROM sales WHERE user_id = :user_id AND is_deleted = 0 ORDER BY created_at DESC");
         $stmt->bindParam(':user_id', $_SESSION['user_id'], PDO::PARAM_INT);
         $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $fetchAll = $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function deleteTransaction($saleId)
     {
-        $stmt = $this->db->prepare("DELETE FROM sales WHERE id = :sale_id");
+        // MODIFIED: Changed from DELETE to UPDATE
+        // We set is_deleted = 1 and synced = 0 so the Cloud learns about the deletion
+        $stmt = $this->db->prepare("UPDATE sales SET is_deleted = 1, synced = 0 WHERE id = :sale_id");
         $stmt->bindParam(':sale_id', $saleId, PDO::PARAM_INT);
         return $stmt->execute();
     }

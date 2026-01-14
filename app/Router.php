@@ -2,9 +2,9 @@
 
 namespace app;
 
-use app\Controllers\BookingController;
 use app\Controllers\POSController;
 use app\Controllers\UsersController;
+use app\Controllers\SyncController;
 
 class Router
 {
@@ -27,6 +27,12 @@ class Router
         Router::add('/get-sales-items', fn() => (new POSController())->getSalesItems(), 'POST');
 
         Router::add('/print-receipt', fn() => (new POSController())->printReceipt(), 'GET');
+
+        // Sync API endpoints
+        Router::add('/api/sync-trigger', fn() => (new SyncController())->handleAutoSync(), 'GET');
+        Router::add('/api/manual-trigger', fn() => (new SyncController())->pullAndPush(), 'GET');
+
+
         Router::run();
     }
 
@@ -44,7 +50,12 @@ class Router
         foreach (self::$routes as $route => $callback) {
             if (preg_match("#^$route$#", $requestUri, $matches)) {
                 $params = array_filter($matches, 'is_string', ARRAY_FILTER_USE_KEY);
-                echo call_user_func($callback, $params);
+                $response = call_user_func($callback, $params);
+                if (is_array($response)) {
+                    echo json_encode($response);
+                } else {
+                    echo $response;
+                }
 
                 return;
             }
