@@ -119,7 +119,6 @@ class POSModel
 
     public function getTransactionHistory()
     {
-        // Added WHERE is_deleted = 0 so deleted sales don't show up in history
         $stmt = $this->db->prepare("SELECT * FROM sales WHERE user_id = :user_id AND is_deleted = 0 ORDER BY created_at DESC");
         $stmt->bindParam(':user_id', $_SESSION['user_id'], PDO::PARAM_INT);
         $stmt->execute();
@@ -128,8 +127,6 @@ class POSModel
 
     public function deleteTransaction($saleId)
     {
-        // MODIFIED: Changed from DELETE to UPDATE
-        // We set is_deleted = 1 and synced = 0 so the Cloud learns about the deletion
         $stmt = $this->db->prepare("UPDATE sales SET is_deleted = 1, synced = 0 WHERE id = :sale_id");
         $stmt->bindParam(':sale_id', $saleId, PDO::PARAM_INT);
         return $stmt->execute();

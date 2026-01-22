@@ -25,9 +25,6 @@ class SyncModel
         $this->db = $db->getConnection();
     }
 
-    /**
-     * Pull remote updates based on the synced_to_local flag
-     */
     public function pullRemoteData($targetTable = null)
     {
         $apiKey = $_ENV['SYNC_API_KEY'] ?? '';
@@ -39,7 +36,6 @@ class SyncModel
             try {
                 $cleanTable = trim($table);
 
-                // 1. Fetch from Remote
                 $url = "https://pos.lugodsquare.com/api/get-updates?key=" . urlencode($apiKey) . "&table=" . urlencode($cleanTable);
 
                 $ch = curl_init();
@@ -66,10 +62,8 @@ class SyncModel
 
                 $processedIds = [];
                 foreach ($remoteData['data'] as $row) {
-                    // Mark as synced locally so we don't push it back
                     $row['synced'] = 1;
 
-                    // Remove the remote-only flag before saving to local
                     if (isset($row['synced_to_local'])) {
                         unset($row['synced_to_local']);
                     }
@@ -88,7 +82,6 @@ class SyncModel
                     $processedIds[] = $row['id'];
                 }
 
-                // 2. Handshake: Confirm receipt to Remote
                 if (!empty($processedIds)) {
                     $this->confirmReceiptToRemote($cleanTable, $processedIds);
                 }
@@ -102,9 +95,6 @@ class SyncModel
         return $summary;
     }
 
-    /**
-     * Handshake logic
-     */
     private function confirmReceiptToRemote($table, $ids)
     {
         $apiKey = $_ENV['SYNC_API_KEY'] ?? '';
@@ -120,9 +110,6 @@ class SyncModel
         curl_close($ch);
     }
 
-    /**
-     * Push logic (Already using synced=0)
-     */
     public function pushLocalData()
     {
         $apiKey = $_ENV['SYNC_API_KEY'] ?? '';

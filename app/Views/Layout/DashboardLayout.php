@@ -15,37 +15,11 @@ $date = date('F d, Y');
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 
     <link rel="stylesheet" href="/css/custom.css">
 
     <title><?= isset($title) && !empty($title) ? $this->e($title) : htmlspecialchars($_ENV['APP_NAME'] ?? '') ?></title>
-
-    <!-- <style>
-        /* Ensure the products column fills the screen height */
-        .pos-products {
-            display: flex;
-            flex-direction: column;
-            height: calc(100vh - 70px);
-            /* 70px is the approx height of your green header */
-        }
-
-        /* This container will hold your Food/Merch rows and allow them to scroll */
-        #food-products,
-        #merch-products {
-            flex: 1;
-            overflow-y: auto;
-            padding: 15px;
-        }
-
-        /* The Sync Bar - now locked to the bottom */
-        .sync-status-bar {
-            background: #f8f9fa;
-            border-top: 1px solid #dee2e6;
-            padding: 8px 15px;
-            width: 100%;
-        }
-    </style> -->
 </head>
 
 <body>
@@ -109,7 +83,7 @@ $date = date('F d, Y');
                     <?php endif; ?>
                 <?php endforeach; ?>
             </div>
-            <div class="d-flex align-items-center bg-light p-2 rounded border bottom">
+            <div class="d-flex align-items-center bg-light p-2 rounded border bottom mt-3">
                 <div id="sync-indicator" class="rounded-circle me-2"
                     style="width: 12px; height: 12px; background-color: #6c757d; transition: background-color 0.3s ease;">
                 </div>
@@ -263,9 +237,8 @@ $date = date('F d, Y');
             const statusText = document.getElementById('sync-status');
             const timeText = document.getElementById('sync-time');
 
-            // 1. Check browser-level connectivity
             if (!navigator.onLine) {
-                indicator.style.backgroundColor = '#dc3545'; // Red
+                indicator.style.backgroundColor = '#dc3545';
                 statusText.innerText = 'OFFLINE';
                 statusText.className = 'fw-bold text-danger text-uppercase';
                 return;
@@ -274,7 +247,7 @@ $date = date('F d, Y');
             if (isSyncing) return;
 
             isSyncing = true;
-            indicator.style.backgroundColor = '#fd7e14'; // Orange (Busy)
+            indicator.style.backgroundColor = '#fd7e14';
             statusText.innerText = 'SYNCING...';
 
             try {
@@ -285,8 +258,7 @@ $date = date('F d, Y');
                 const data = await response.json();
                 console.log('Sync result:', data);
 
-                // 2. Success state
-                indicator.style.backgroundColor = '#198754'; // Green
+                indicator.style.backgroundColor = '#198754';
                 statusText.innerText = 'ONLINE';
                 statusText.className = 'fw-bold text-success text-uppercase';
                 timeText.innerText = 'Last: ' + new Date().toLocaleTimeString([], {
@@ -295,8 +267,7 @@ $date = date('F d, Y');
                 });
 
             } catch (error) {
-                // 3. Error state (Server down or timeout)
-                indicator.style.backgroundColor = '#dc3545'; // Red
+                indicator.style.backgroundColor = '#dc3545';
                 statusText.innerText = 'SYNC ERROR';
                 statusText.className = 'fw-bold text-danger text-uppercase';
                 console.error('Heartbeat failed:', error);
@@ -305,13 +276,9 @@ $date = date('F d, Y');
             }
         }
 
-        // Run every 60 seconds
         setInterval(runAutoSync, 60000);
-
-        // Run immediately on page load
         runAutoSync();
 
-        // Listen for browser online/offline events for instant UI feedback
         window.addEventListener('online', runAutoSync);
         window.addEventListener('offline', () => {
             document.getElementById('sync-indicator').style.backgroundColor = '#dc3545';
