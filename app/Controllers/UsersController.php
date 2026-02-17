@@ -4,15 +4,18 @@ namespace app\Controllers;
 
 use config\DBConnection;
 use app\Models\UsersModel;
+use app\Models\ShiftModel;
 
 class UsersController
 {
     private $UsersModel;
+    private $ShiftModel;
 
     public function __construct()
     {
         $db = new DBConnection();
         $this->UsersModel = new UsersModel($db);
+        $this->ShiftModel = new ShiftModel($db);
     }
 
     public function index()
@@ -55,6 +58,15 @@ class UsersController
         }
 
         $user = $this->UsersModel->getUserByUsername($username);
+
+        if ($this->ShiftModel->hasEndedShiftToday($user['id'])) {
+            $_SESSION['danger'][] = 'You have already ended your shift today. You can log in tomorrow.';
+            echo $GLOBALS['templates']->render('Login');
+            exit;
+        }
+
+        // Start shift if not already started
+        $this->ShiftModel->startShiftIfNotExists($user['id']);
 
         if (!$user || !password_verify($password, $user['password'])) {
             $_SESSION['danger'][] = 'Invalid username or password.';

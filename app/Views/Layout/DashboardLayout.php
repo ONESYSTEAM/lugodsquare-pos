@@ -34,6 +34,7 @@ $date = date('F d, Y');
             </div>
         </div>
         <div>
+            <button class="btn btn-light btn-sm text-custom fw-bold" id="endShiftBtn"><i class="bi bi-stop-circle"></i> End Shift </button>
             <button class="btn btn-light btn-sm text-custom fw-bold" id="transactionBtn"><i class="bi bi-clock-history"></i> Transaction History</button>
             <button class="btn btn-light btn-sm text-custom fw-bold d-none" id="orderSumBtn"><i class="bi bi-receipt"></i> Order Summary</button>
             <a href="/logout" class="btn btn-light btn-sm text-custom fw-bold">
@@ -283,6 +284,25 @@ $date = date('F d, Y');
         window.addEventListener('offline', () => {
             document.getElementById('sync-indicator').style.backgroundColor = '#dc3545';
             document.getElementById('sync-status').innerText = 'OFFLINE';
+        });
+
+
+        document.getElementById('endShiftBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+
+            Swal.fire({
+                title: 'End Shift?',
+                text: "Are you sure you want to end your shift?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, end shift'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = "/end-shift";
+                }
+            });
         });
     </script>
 </body>
