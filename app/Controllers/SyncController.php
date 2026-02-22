@@ -42,7 +42,7 @@ class SyncController
         $remoteUrlBase = "https://admin.lugodsquare.com/uploads/products/";
 
         // Path adjusted for typical XAMPP structure: htdocs/your_project/public/uploads/products/
-        $localPathBase = $_SERVER['DOCUMENT_ROOT'] . "/public/uploads/products/";
+        $localPathBase = $_SERVER['DOCUMENT_ROOT'] . "/uploads/products/";
 
         if (!is_dir($localPathBase)) {
             mkdir($localPathBase, 0755, true);
