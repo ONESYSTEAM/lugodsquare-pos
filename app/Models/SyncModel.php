@@ -154,4 +154,11 @@ class SyncModel
         }
         return $summary;
     }
+
+    public function getAllLocalProducts()
+    {
+        $stmt = $this->db->prepare("SELECT id, product_image FROM products");
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }

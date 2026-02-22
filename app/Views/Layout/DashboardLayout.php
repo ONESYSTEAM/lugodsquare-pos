@@ -1,8 +1,24 @@
 <?php
 $transaction_no = 'TXN-' . strtoupper(uniqid());
 $date = date('F d, Y');
-?>
 
+function getProductImage($imageName)
+{
+    $localPath = $_SERVER['DOCUMENT_ROOT'] . "/pos/public/uploads/products/" . $imageName;
+    $localUrl = "/pos/public/uploads/products/" . $imageName;
+    $remoteUrl = "https://admin.lugodsquare.com/uploads/products/" . $imageName;
+    $placeholder = "https://placehold.co/150?text=No+Image";
+
+    if (empty($imageName)) {
+        return $placeholder;
+    }
+    if (file_exists($localPath)) {
+        return $localUrl;
+    }
+
+    return $remoteUrl;
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -61,7 +77,7 @@ $date = date('F d, Y');
                     <?php if ($product['product_category'] === 'Foods'): ?>
                         <div class="col-6 col-md-4 col-lg-3">
                             <div class="product-card">
-                                <img src="https://placehold.co/150" class="product-img" alt="<?= $product['product_name'] ?>">
+                                <img src="<?= getProductImage($product['product_image']) ?>" class="product-img" alt="<?= $product['product_name'] ?>">
                                 <h6 class="mt-2 mb-1"><?= $product['product_name'] ?></h6>
                                 <p class="text-custom mb-0">₱<?= number_format($product['price'], 2) ?></p>
                                 <small>Qty: <?= $product['qty'] ?></small>
@@ -75,7 +91,7 @@ $date = date('F d, Y');
                     <?php if ($product['product_category'] === 'Merch'): ?>
                         <div class="col-6 col-md-4 col-lg-3">
                             <div class="product-card">
-                                <img src="https://placehold.co/150" class="product-img" alt="<?= $product['product_name'] ?>">
+                                <img src="<?= getProductImage($product['product_image']) ?>" class="product-img">
                                 <h6 class="mt-2 mb-1"><?= $product['product_name'] ?></h6>
                                 <p class="text-custom mb-0">₱<?= number_format($product['price'], 2) ?></p>
                                 <small>Qty: <?= $product['qty'] ?></small>
