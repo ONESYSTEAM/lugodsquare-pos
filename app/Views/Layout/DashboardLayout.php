@@ -4,8 +4,8 @@ $date = date('F d, Y');
 
 function getProductImage($imageName)
 {
-    $localPath = $_SERVER['DOCUMENT_ROOT'] . "/pos/public/uploads/products/" . $imageName;
-    $localUrl = "/pos/public/uploads/products/" . $imageName;
+    $localPath = $_SERVER['DOCUMENT_ROOT'] . "/uploads/products/" . $imageName;
+    $localUrl = "/uploads/products/" . $imageName;
     $remoteUrl = "https://admin.lugodsquare.com/uploads/products/" . $imageName;
     $placeholder = "https://placehold.co/150?text=No+Image";
 
@@ -16,7 +16,7 @@ function getProductImage($imageName)
         return $localUrl;
     }
 
-    return $remoteUrl;
+    // return $remoteUrl;
 }
 ?>
 <!DOCTYPE html>
