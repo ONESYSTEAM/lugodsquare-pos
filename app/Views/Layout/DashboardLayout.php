@@ -16,7 +16,7 @@ function getProductImage($imageName)
         return $localUrl;
     }
 
-    // return $remoteUrl;
+    return $remoteUrl;
 }
 ?>
 <!DOCTYPE html>
