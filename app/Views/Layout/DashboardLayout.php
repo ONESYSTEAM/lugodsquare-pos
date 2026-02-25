@@ -51,6 +51,7 @@ function getProductImage($imageName)
         </div>
         <div>
             <button class="btn btn-light btn-sm text-custom fw-bold" id="endShiftBtn"><i class="bi bi-stop-circle"></i> End Shift </button>
+            <a href="/attendance" class="btn btn-light btn-sm text-custom fw-bold" id="attendanceBtn"><i class="bi bi-journal-text"></i> Time In/Out</a>
             <button class="btn btn-light btn-sm text-custom fw-bold" id="transactionBtn"><i class="bi bi-clock-history"></i> Transaction History</button>
             <button class="btn btn-light btn-sm text-custom fw-bold d-none" id="orderSumBtn"><i class="bi bi-receipt"></i> Order Summary</button>
             <a href="/logout" class="btn btn-light btn-sm text-custom fw-bold">

@@ -104,4 +104,64 @@ class UsersController
             'users' => $users
         ]);
     }
+
+    public function attendance()
+    {
+        $status = $this->attendanceStatus();
+        echo $GLOBALS['templates']->render('Attendance', [
+            'isTimedIn' => $status
+        ]);
+    }
+
+    private function attendanceStatus()
+    {
+        $isTimedIn = false;
+        if (isset($_SESSION['user_id'])) {
+            $attendance = $this->UsersModel->getAttendanceByUserId($_SESSION['user_id']);
+            if ($attendance && !$attendance['time_out']) {
+                $isTimedIn = true;
+            }
+        }
+        return $isTimedIn;
+    }
+
+    public function timeIn($idNumber)
+    {
+        $result = $this->UsersModel->timeIn($idNumber, $_SESSION['user_id'] ?? 0);
+        if ($result) {
+            $_SESSION['success'][] = 'Time in successful. Have a great day!';
+        } else {
+            $_SESSION['danger'][] = 'Failed to time in.';
+        }
+        header("Location: /");
+        exit;
+    }
+
+    public function timeOut($idNumber)
+    {
+        $result = $this->UsersModel->timeOut($idNumber);
+        if ($result) {
+            $_SESSION['success'][] = 'Time out successful.';
+        } else {
+            $_SESSION['danger'][] = 'Failed to time out.';
+        }
+        header("Location: /");
+        exit;
+    }
+
+    public function showLogs()
+    {
+        $userId = $_SESSION['user_id'] ?? '';
+        if ($userId === '') {
+            header('Location: /login');
+            exit;
+        }
+        $logs = $this->UsersModel->getDailyLogs($userId);
+
+        $status = $this->attendanceStatus();
+        echo $GLOBALS['templates']->render('AttendanceLogs', [
+            'attendances' => $logs,
+            'isTimedIn'   => $status
+        ]);
+    }
 }
