@@ -18,6 +18,7 @@ class SyncModel
         'users',
         'email_verifications',
         'products',
+        'attendance'
     ];
 
     public function __construct(DBConnection $db)
