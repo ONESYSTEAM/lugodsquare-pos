@@ -71,6 +71,7 @@ function getProductImage($imageName)
                 <div class="btn-group mb-2">
                     <button class="btn btn-outline-custom btn-sm" id="food">Foods</button>
                     <button class="btn btn-outline-custom btn-sm" id="merch">Merch</button>
+                    <button class="btn btn-outline-custom btn-sm" id="rentals">Rentals</button>
                 </div>
             </div>
             <div class="row g-3 d-none" id="food-products">
@@ -96,6 +97,19 @@ function getProductImage($imageName)
                                 <h6 class="mt-2 mb-1"><?= $product['product_name'] ?></h6>
                                 <p class="text-custom mb-0">₱<?= number_format($product['price'], 2) ?></p>
                                 <small>Qty: <?= $product['qty'] ?></small>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                <?php endforeach; ?>
+            </div>
+            <div class="row g-3 d-none" id="rentals-products">
+                <?php foreach ($products as $product): ?>
+                    <?php if ($product['product_category'] === 'Rentals'): ?>
+                        <div class="col-6 col-md-4 col-lg-3">
+                            <div class="product-card">
+                                <img src="https://placehold.co/150?text=Rental" class="product-img">
+                                <h6 class="mt-2 mb-1"><?= $product['product_name'] ?></h6>
+                                <p class="text-custom mb-0">₱<?= number_format($product['price'], 2) ?></p>
                             </div>
                         </div>
                     <?php endif; ?>
@@ -225,7 +239,9 @@ function getProductImage($imageName)
             $('#food').on('click', function() {
                 $('#food-products').removeClass('d-none');
                 $('#merch-products').addClass('d-none');
+                $('#rentals-products').addClass('d-none');
                 $('#merch').removeClass('btn-custom').addClass('btn-outline-custom');
+                $('#rentals').removeClass('btn-custom').addClass('btn-outline-custom');
                 $(this).addClass('btn-custom').removeClass('btn-outline-custom');
                 $('#discountContainer').addClass('d-none');
                 $('#discount-span').addClass('d-none');
@@ -238,13 +254,29 @@ function getProductImage($imageName)
             $('#merch').on('click', function() {
                 $('#merch-products').removeClass('d-none');
                 $('#food-products').addClass('d-none');
+                $('#rentals-products').addClass('d-none');
                 $(this).addClass('btn-custom').removeClass('btn-outline-custom');
                 $('#food').removeClass('btn-custom').addClass('btn-outline-custom');
+                $('#rentals').removeClass('btn-custom').addClass('btn-outline-custom');
                 $('#discountContainer').removeClass('d-none');
                 $('#discount-span').removeClass('d-none');
                 $('.br').removeClass('d-none');
                 $('#subTotal').removeClass('d-none');
 
+            })
+        })
+        $(document).ready(function() {
+            $('#rentals').on('click', function() {
+                $('#rentals-products').removeClass('d-none');
+                $('#merch-products').addClass('d-none');
+                $('#food-products').addClass('d-none');
+                $(this).addClass('btn-custom').removeClass('btn-outline-custom');
+                $('#merch').removeClass('btn-custom').addClass('btn-outline-custom');
+                $('#food').removeClass('btn-custom').addClass('btn-outline-custom');
+                $('#discountContainer').removeClass('d-none');
+                $('#discount-span').removeClass('d-none');
+                $('.br').removeClass('d-none');
+                $('#subTotal').removeClass('d-none');
             })
         })
 
