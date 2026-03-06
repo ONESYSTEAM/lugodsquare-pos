@@ -9,7 +9,8 @@
         "dalira-php/model": "^1.0",
         "dalira-php/controller": "^1.0",
         "dalira-php/view": "^1.0",
-        "mike42/escpos-php": "^4.0"
+        "mike42/escpos-php": "^4.0",
+        "phpoffice/phpspreadsheet": "^5.5"
     },
     "autoload": {
         "psr-4": {

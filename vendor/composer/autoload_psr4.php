@@ -8,6 +8,12 @@ $baseDir = dirname($vendorDir);
 return array(
     'config\\' => array($baseDir . '/config'),
     'app\\' => array($baseDir . '/app'),
+    'ZipStream\\' => array($vendorDir . '/maennchen/zipstream-php/src'),
+    'Psr\\SimpleCache\\' => array($vendorDir . '/psr/simple-cache/src'),
+    'PhpOffice\\PhpSpreadsheet\\' => array($vendorDir . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet'),
     'Mike42\\' => array($vendorDir . '/mike42/escpos-php/src/Mike42', $vendorDir . '/mike42/gfx-php/src/Mike42'),
+    'Matrix\\' => array($vendorDir . '/markbaker/matrix/classes/src'),
     'League\\Plates\\' => array($vendorDir . '/league/plates/src'),
+    'Composer\\Pcre\\' => array($vendorDir . '/composer/pcre/src'),
+    'Complex\\' => array($vendorDir . '/markbaker/complex/classes/src'),
 );

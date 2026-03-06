@@ -15,13 +15,28 @@ class ComposerStaticInita954e09c5d63b95fcf6f198a27b8b996
         array (
             'app\\' => 4,
         ),
+        'Z' => 
+        array (
+            'ZipStream\\' => 10,
+        ),
+        'P' => 
+        array (
+            'Psr\\SimpleCache\\' => 16,
+            'PhpOffice\\PhpSpreadsheet\\' => 25,
+        ),
         'M' => 
         array (
             'Mike42\\' => 7,
+            'Matrix\\' => 7,
         ),
         'L' => 
         array (
             'League\\Plates\\' => 14,
+        ),
+        'C' => 
+        array (
+            'Composer\\Pcre\\' => 14,
+            'Complex\\' => 8,
         ),
     );
 
@@ -34,14 +49,38 @@ class ComposerStaticInita954e09c5d63b95fcf6f198a27b8b996
         array (
             0 => __DIR__ . '/../..' . '/app',
         ),
+        'ZipStream\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/maennchen/zipstream-php/src',
+        ),
+        'Psr\\SimpleCache\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/psr/simple-cache/src',
+        ),
+        'PhpOffice\\PhpSpreadsheet\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/phpoffice/phpspreadsheet/src/PhpSpreadsheet',
+        ),
         'Mike42\\' => 
         array (
             0 => __DIR__ . '/..' . '/mike42/escpos-php/src/Mike42',
             1 => __DIR__ . '/..' . '/mike42/gfx-php/src/Mike42',
         ),
+        'Matrix\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/markbaker/matrix/classes/src',
+        ),
         'League\\Plates\\' => 
         array (
             0 => __DIR__ . '/..' . '/league/plates/src',
+        ),
+        'Composer\\Pcre\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/composer/pcre/src',
+        ),
+        'Complex\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/markbaker/complex/classes/src',
         ),
     );
 

@@ -51,9 +51,10 @@ function getProductImage($imageName)
         </div>
         <div>
             <button class="btn btn-light btn-sm text-custom fw-bold" id="endShiftBtn"><i class="bi bi-stop-circle"></i> End Shift </button>
-            <a href="/attendance" class="btn btn-light btn-sm text-custom fw-bold" id="attendanceBtn"><i class="bi bi-journal-text"></i> Time In/Out</a>
             <button class="btn btn-light btn-sm text-custom fw-bold" id="transactionBtn"><i class="bi bi-clock-history"></i> Transaction History</button>
             <button class="btn btn-light btn-sm text-custom fw-bold d-none" id="orderSumBtn"><i class="bi bi-receipt"></i> Order Summary</button>
+            <button class="btn btn-light btn-sm text-custom fw-bold " id="gcashBtn" data-bs-toggle="modal" data-bs-target="#gcashModal"><i class="bi bi-wallet"></i> Gcash</button>
+            <button class="btn btn-light btn-sm text-custom fw-bold " id="cashBtn" data-bs-toggle="modal" data-bs-target="#cashModal"><i class="bi bi-receipt"></i> Cash</button>
             <a href="/logout" class="btn btn-light btn-sm text-custom fw-bold">
                 <i class="mdi mdi-logout"></i> Logout
             </a>
@@ -157,7 +158,12 @@ function getProductImage($imageName)
             </div>
         </div>
         <div class="pos-sidebar d-none" id="transactionSideBar">
-            <h6 class="fw-bold text-custom mb-1 p-3 mb-3 border-bottom">Transaction History</h6>
+            <div class="d-flex justify-content-between border-bottom">
+                <h6 class="fw-bold text-custom mb-1 p-3 ">Transaction History</h6>
+                <div class="d-flex gap-2 align-items-center me-2">
+                    <button class="btn btn-custom btn-sm text-light" id="generateSalesReportBtn"><i class="bi bi-file-earmark-bar-graph"></i> Sales Report</button>
+                </div>
+            </div>
             <div class="transaction-list">
                 <?php if (!empty($transactions)): ?>
                     <?php foreach ($transactions as $data): ?>
@@ -206,6 +212,45 @@ function getProductImage($imageName)
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="cashModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="exampleModalLabel">Cash Payment</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form action="/payment" method="POST" id="cashPaymentForm">
+                        <input type="hidden" name="payment_method" value="Cash">
+                        <input type="text" value="<?= $transaction_no ?>" name="transaction_no" readonly>
+                        <input type="text" placeholder="Enter Cash Amount" name="amount">
+                        <button type="submit">Confirm</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="gcashModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="exampleModalLabel">Gcash Payment</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="modal-body">
+                        <form action="/payment" method="POST" id="cashPaymentForm">
+                            <input type="hidden" name="payment_method" value="Gcash">
+                            <input type="text" placeholder="Enter Transaction No." name="transaction_no">
+                            <input type="text" placeholder="Enter Gcash Amount" name="amount">
+                            <button type="submit">Confirm</button>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -350,6 +395,53 @@ function getProductImage($imageName)
             }).then((result) => {
                 if (result.isConfirmed) {
                     window.location.href = "/end-shift";
+                }
+            });
+        });
+
+        $('#generateSalesReportBtn').on('click', function() {
+
+            const cashierName = "<?= $_SESSION['first_name'] . ' ' . $_SESSION['last_name'] ?? 'Cashier' ?>";
+
+            Swal.fire({
+                title: 'Generate Report for ' + cashierName + '?',
+                text: "Select transaction type:",
+                icon: 'question',
+                input: 'radio',
+                inputOptions: {
+                    'cash': 'Cash Only',
+                    'gcash': 'GCash Only',
+                    'both': 'Both (Full Report)'
+                },
+                inputValidator: (value) => {
+                    if (!value) return 'You must choose an option!';
+                },
+                showCancelButton: true,
+                confirmButtonText: 'Download Excel',
+                confirmButtonColor: '#28a745' // Green for Excel
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const mode = result.value;
+
+                    // 1. Point to the route
+                    const downloadUrl = "/generate-sales-report?mode=" + mode;
+
+                    // 2. Trigger download without leaving the page
+                    const link = document.createElement("a");
+                    link.href = downloadUrl;
+                    link.download = ""; // This forces the browser to treat it as a download
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+
+                    // 3. Optional: Final Success Message
+                    Swal.fire({
+                        title: 'Success!',
+                        text: 'Your Excel report is being generated.',
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
                 }
             });
         });

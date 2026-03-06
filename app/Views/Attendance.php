@@ -2,7 +2,6 @@
 $this->layout('Layout/Layout', ['mainContent' => $this->fetch('Layout/Layout')]);
 $this->start('mainContent');
 $this->insert('Errors/Toasts');
-
 ?>
 
 <div class="container-scroller">
@@ -15,18 +14,16 @@ $this->insert('Errors/Toasts');
                             <img src="<?= htmlspecialchars($_ENV['APP_LOGO'] ?? '') ?>">
                         </div>
 
-                        <h4><?= $isTimedIn ? 'Thank you for your service!' : 'Hello! Ready to start your day?' ?></h4>
-                        <h6 class="font-weight-light">
-                            <?= $isTimedIn ? 'Scan your ID to time out.' : 'Scan your ID to time in.' ?>
-                        </h6>
+                        <h4 id="attendance-header">Hello! let's get started</h4>
+                        <h6 id="attendance-subheader" class="font-weight-light">Scan your ID to time in / time out.</h6>
 
-                        <form action="<?= $isTimedIn ? 'attendance/timeOut' : 'attendance/timeIn' ?>" method="post" class="pt-3">
+                        <form id="attendance-form" action="/attendance/submit" method="post" class="pt-3">
                             <div class="form-group mb-2">
                                 <input type="text" class="form-control form-control-lg" name="idNumber" placeholder="ID Number" autofocus>
                             </div>
                             <div class="mt-3 d-grid gap-2">
-                                <button type="submit" class="btn btn-block <?= $isTimedIn ? 'btn-danger' : 'btn-custom' ?> btn-lg font-weight-medium auth-form-btn text-uppercase">
-                                    <?= $isTimedIn ? 'Time Out' : 'Time In' ?>
+                                <button type="submit" id="attendance-btn" class="btn btn-block btn-custom btn-lg font-weight-medium auth-form-btn text-uppercase">
+                                    Confirm
                                 </button>
                             </div>
                         </form>
@@ -40,5 +37,8 @@ $this->insert('Errors/Toasts');
 <div class="powered-by">
     Powered by: <a href="https://onesysteam.com/" class="text-decoration-none text-danger" target="_blank">OneSysteam</a>
 </div>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+
 
 <?php $this->stop(); ?>

@@ -1,0 +1,15 @@
+<br />
+<b>Fatal error</b>:  Uncaught League\Plates\Exception\TemplateNotFound: The template &quot;Layout&quot; could not be found at &quot;/home3/lugodsqu/admin.lugodsquare.com/config/../app/Views/Layout.php&quot;. in /home3/lugodsqu/admin.lugodsquare.com/vendor/league/plates/src/Template/ResolveTemplatePath/NameAndFolderResolveTemplatePath.php:18
+Stack trace:
+#0 /home3/lugodsqu/admin.lugodsquare.com/vendor/league/plates/src/Template/Template.php(161): League\Plates\Template\ResolveTemplatePath\NameAndFolderResolveTemplatePath-&gt;__invoke()
+#1 /home3/lugodsqu/admin.lugodsquare.com/vendor/league/plates/src/Engine.php(304): League\Plates\Template\Template-&gt;render()
+#2 /home3/lugodsqu/admin.lugodsquare.com/vendor/league/plates/src/Template/Template.php(316): League\Plates\Engine-&gt;render()
+#3 /home3/lugodsqu/admin.lugodsquare.com/app/Views/Errors/404.php(2): League\Plates\Template\Template-&gt;fetch()
+#4 /home3/lugodsqu/admin.lugodsquare.com/vendor/league/plates/src/Template/Template.php(169): include('/home3/lugodsqu...')
+#5 /home3/lugodsqu/admin.lugodsquare.com/vendor/league/plates/src/Template/Template.php(170): League\Plates\Template\Template-&gt;League\Plates\Template\{closure}()
+#6 /home3/lugodsqu/admin.lugodsquare.com/vendor/league/plates/src/Engine.php(304): League\Plates\Template\Template-&gt;render()
+#7 /home3/lugodsqu/admin.lugodsquare.com/app/Router.php(124): League\Plates\Engine-&gt;render()
+#8 /home3/lugodsqu/admin.lugodsquare.com/app/Router.php(102): app\Router::run()
+#9 /home3/lugodsqu/admin.lugodsquare.com/public/index.php(17): app\Router::init()
+#10 {main}
+  thrown in <b>/home3/lugodsqu/admin.lugodsquare.com/vendor/league/plates/src/Template/ResolveTemplatePath/NameAndFolderResolveTemplatePath.php</b> on line <b>18</b><br />

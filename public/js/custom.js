@@ -203,7 +203,7 @@ $(document).ready(function () {
                             <input type="text" id="cardPayment" class="form-control d-none" placeholder="Scan or enter card number">
                         </div>
                         <div class="col-12 mt-2" id="paymentOptionBtn">
-                            <button class="btn btn-custom btn-sm" id="cardPaymentBtn">Pay Via Membership Card </button>
+                            <button class="btn btn-outline-custom btn-sm" id="cardPaymentBtn">Pay with Card </button>
                         </div>
                         <div class="mt-2 d-none" id="undoPaymentCon">
                             <button class="btn btn-custom btn-sm" id="undoPaymentBtn">Undo Card Payment</button>
@@ -230,9 +230,6 @@ $(document).ready(function () {
           change >= 0 ? "₱" + change.toFixed(2) : "Insufficient",
         );
       });
-
-    let scanBuffer = "";
-    let scanTimeout = null;
 
     modalBody
       .off("keydown", "#amountPaid")
@@ -399,14 +396,36 @@ $(document).ready(function () {
 
     if (isCardMode) {
       $("#cardPayment").addClass("d-none");
-      $("#amountPaid").removeClass("d-none");
+      $("#amountPaid").removeClass("d-none").trigger("focus");
       $(this).text("Pay with Card");
+      $("#paymentOptionLbl").text("Cash Payment");
+      $("#amountPaid").val("");
+    } else {
+      $("#amountPaid").addClass("d-none");
+      $("#gcashPayment").addClass("d-none");
+      $("#cardPayment").removeClass("d-none").trigger("focus");
+      $("#gcashPaymentBtn").text("Pay with Gcash");
+      $(this).text("Pay with Cash");
+      $("#paymentOptionLbl").text("Membership Card Payment");
+      $("#receiptChange").text("₱0.00");
+    }
+  });
+
+  $(document).on("click", "#gcashPaymentBtn", function () {
+    const isGcashMode = $("#gcashPayment").is(":visible");
+
+    if (isGcashMode) {
+      $("#gcashPayment").addClass("d-none");
+      $("#amountPaid").removeClass("d-none").trigger("focus");
+      $(this).text("Pay with Gcash");
       $("#paymentOptionLbl").text("Cash Payment");
     } else {
       $("#amountPaid").addClass("d-none");
-      $("#cardPayment").removeClass("d-none").trigger("focus");
+      $("#cardPayment").addClass("d-none");
+      $("#gcashPayment").removeClass("d-none").trigger("focus");
+      $("#cardPaymentBtn").text("Pay with Card");
       $(this).text("Pay with Cash");
-      $("#paymentOptionLbl").text("Card Payment");
+      $("#paymentOptionLbl").text("Walk-in Gcash Payment");
     }
   });
 
@@ -472,16 +491,22 @@ $(document).ready(function () {
   $("#confirmBtn").on("click", function () {
     const amountPaid = $("#amountPaid").val()?.trim();
     const cardPayment = $("#cardPayment").val()?.trim();
+    const gcashPayment = $("#gcashPayment").val()?.trim();
+
     const total =
       parseFloat(
         $("#receiptTotal").text().replace("₱", "").replace(/,/g, ""),
       ) || 0;
 
-    if ((!amountPaid || parseFloat(amountPaid) < total) && !cardPayment) {
+    if (
+      (!amountPaid || parseFloat(amountPaid) < total) &&
+      !cardPayment &&
+      !gcashPayment
+    ) {
       Swal.fire({
         icon: "warning",
         title: "Incomplete Payment",
-        text: "Please enter a valid cash amount or provide card payment before confirming.",
+        text: "Please enter a valid cash amount or provide card or GCash payment before confirming.",
       });
       return;
     }
@@ -520,9 +545,12 @@ $(document).ready(function () {
       parseFloat(
         $("#receiptTotal").text().replace("₱", "").replace(/,/g, ""),
       ) || 0;
-    const paymentMode = $("#cardPayment").is(":visible") ? "Card" : "Cash";
+    const paymentMode = $("#cardPayment").is(":visible")
+      ? "Card"
+      : $("#gcashPayment").is(":visible")
+        ? "GCash"
+        : "Cash";
 
-    // ✅ NEW: cash amount & change
     let cashAmount = null;
     let cashChange = null;
 

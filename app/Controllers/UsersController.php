@@ -105,81 +105,32 @@ class UsersController
         ]);
     }
 
-    public function attendance()
+    public function recordAttendace($idNumber)
     {
-        $status = $this->attendanceStatus();
-        echo $GLOBALS['templates']->render('Attendance', [
-            'isTimedIn' => $status
-        ]);
-    }
-
-    private function attendanceStatus()
-    {
-        $isTimedIn = false;
-        if (isset($_SESSION['user_id'])) {
-            $attendance = $this->UsersModel->getAttendanceByUserId($_SESSION['user_id']);
-            if ($attendance && !$attendance['time_out']) {
-                $isTimedIn = true;
+        $user = $this->UsersModel->confirmUserByIdNumber($idNumber);
+        if (!$user) {
+            $_SESSION['danger'][] = 'ID number not recognized. Please try again.';
+            header("Location: /attendance");
+            exit;
+        }
+        $username = $user['first_name'] . ' ' . $user['last_name'];
+        $userId = $this->UsersModel->getUserByIdNumberAndNoActiveShift($idNumber);
+        if ($userId) {
+            $userId = $userId['id']; // Extract the user ID from the result array
+            $this->UsersModel->timeIn($idNumber, $userId);
+            $_SESSION['success'][] = $username . ' timed in successfully. Have a great day!';
+            header('Location: /login');
+        } else {
+            $userId = $this->UsersModel->getUserWithActiveShift($idNumber);
+            if ($userId) {
+                $this->UsersModel->timeOut($idNumber);
+                $_SESSION['success'][] = $username . ' timed out successfully.';
+                header('Location: /login');
+            } else {
+                $_SESSION['danger'][] = 'Failed to time out. Please ensure the ID card is valid and no active shift exists.';
+                header("Location: /attendance");
+                exit;
             }
         }
-        return $isTimedIn;
-    }
-
-    public function timeIn($idNumber)
-    {
-        $loggedInUserId = $_SESSION['user_id'] ?? 0;
-
-        $isOwner = $this->UsersModel->verifyIdOwnership($idNumber, $loggedInUserId);
-
-        if (!$isOwner) {
-            $_SESSION['danger'][] = 'This ID card does not belong to your account.';
-            header("Location: /attendance");
-            exit;
-        }
-        $result = $this->UsersModel->timeIn($idNumber, $_SESSION['user_id'] ?? 0);
-        if ($result) {
-            $_SESSION['success'][] = 'Time in successful. Have a great day!';
-        } else {
-            $_SESSION['danger'][] = 'Failed to time in.';
-        }
-        header("Location: /");
-        exit;
-    }
-
-    public function timeOut($idNumber)
-    {
-        $loggedInUserId = $_SESSION['user_id'] ?? 0;
-
-        $isOwner = $this->UsersModel->verifyIdOwnership($idNumber, $loggedInUserId);
-
-        if (!$isOwner) {
-            $_SESSION['danger'][] = 'This ID card does not belong to your account.';
-            header("Location: /attendance");
-            exit;
-        }
-        $result = $this->UsersModel->timeOut($idNumber);
-        if ($result) {
-            $_SESSION['success'][] = 'Time out successful.';
-        } else {
-            $_SESSION['danger'][] = 'Failed to time out.';
-        }
-        header("Location: /");
-        exit;
-    }
-
-    public function showLogs()
-    {
-        $userId = $_SESSION['user_id'] ?? '';
-        if ($userId === '') {
-            header('Location: /login');
-            exit;
-        }
-        $logs = $this->UsersModel->getDailyLogs($userId);
-
-        $status = $this->attendanceStatus();
-        echo $GLOBALS['templates']->render('AttendanceLogs', [
-            'attendances' => $logs,
-            'isTimedIn'   => $status
-        ]);
     }
 }

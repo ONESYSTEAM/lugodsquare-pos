@@ -26,6 +26,9 @@ $this->insert('Errors/Toasts');
                                 <button type="submit" class="btn btn-block btn-custom btn-lg font-weight-medium auth-form-btn text-uppercase">Login</button>
                             </div>
                         </form>
+                        <hr>
+                        <a href="/attendance" class="btn btn-block btn-lg font-weight-medium auth-form-btn text-uppercase w-100 mt-1 btn-outline-custom">Attendance</a>
+
                     </div>
                 </div>
             </div>

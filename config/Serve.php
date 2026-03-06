@@ -9,7 +9,7 @@ class Serve
 
     public function __construct(
         string $host = '127.0.0.1',
-        int $port = 8000,
+        int $port = 8001,
         ?string $phpBin = null
     ) {
         $this->host = $host;

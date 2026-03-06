@@ -337,7 +337,7 @@ class POSController
             header('Content-Type: application/json');
 
             $adminUsername = $_POST['username'] ?? '';
-            $admin = $this->POSModel->getUserById($adminUsername);
+            $admin = $this->POSModel->getAdminUserByUsername($adminUsername);
 
             if ($admin && isset($admin['user_type']) && (int)$admin['user_type'] === 1) {
                 echo json_encode(['status' => 'success', 'valid' => true]);
@@ -428,6 +428,35 @@ class POSController
             }
 
             echo json_encode(['status' => 'error', 'message' => 'No data found']);
+        }
+    }
+
+    public function payment()
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+            $transactionNo = $_POST['transaction_no'] ?? '';
+            $paymentMethod = $_POST['payment_method'] ?? '';
+            $amount = floatval($_POST['amount'] ?? 0);
+            $cashierId = $_SESSION['user_id'] ?? '';
+
+            $itemName = $paymentMethod == 'Gcash' ? 'Gcash Walk-in Payment' : 'Cash Walk-in Payment';
+
+            $pay = $this->POSModel->payment($transactionNo, $paymentMethod, $amount, $cashierId);
+            $saleId = $this->POSModel->getSalesIdByTransactionNo($transactionNo);
+            if ($saleId) {
+                $payItems = $this->POSModel->paymentItems($itemName, $amount, $saleId['id']);
+            }
+
+            if ($pay && $payItems) {
+                $_SESSION['success'][] = 'Payment recorded successfully.';
+                header('Location: /');
+                exit();
+            } else {
+                $_SESSION['danger'][] = 'Failed to record payment.';
+                header('Location: /');
+                exit();
+            }
         }
     }
 }

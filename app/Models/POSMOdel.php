@@ -171,4 +171,33 @@ class POSModel
         $stmt->execute();
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
+
+    public function getAdminUserByUsername($username)
+    {
+        $stmt = $this->db->prepare("SELECT * FROM users WHERE username = :username LIMIT 1");
+        $stmt->bindParam(':username', $username, PDO::PARAM_STR);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function payment($transactionNo, $paymentMethod, $amount, $cashierId)
+    {
+        $stmt = $this->db->prepare("INSERT INTO sales (payment_method, final_total, transaction_no, user_id, synced) 
+                                    VALUES (:payment_method, :final_total, :transaction_no, :user_id, 0)");
+        $stmt->bindParam(':payment_method', $paymentMethod, PDO::PARAM_STR);
+        $stmt->bindParam(':final_total', $amount, PDO::PARAM_STR);
+        $stmt->bindParam(':transaction_no', $transactionNo, PDO::PARAM_STR);
+        $stmt->bindParam(':user_id', $cashierId, PDO::PARAM_INT);
+        return $stmt->execute();
+    }
+
+    public function paymentItems($itemName, $amount, $saleId)
+    {
+        $stmt = $this->db->prepare("INSERT INTO sales_items ( sale_id, item_name, qty, price, total, synced) 
+                                    VALUES (:sale_id, :item_name, 1, 0, :amount, 0)");
+        $stmt->bindParam(':sale_id', $saleId, PDO::PARAM_INT);
+        $stmt->bindParam(':item_name', $itemName, PDO::PARAM_STR);
+        $stmt->bindParam(':amount', $amount, PDO::PARAM_STR);
+        return $stmt->execute();
+    }
 }

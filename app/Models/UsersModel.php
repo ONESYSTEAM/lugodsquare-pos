@@ -44,17 +44,38 @@ class UsersModel
         $stmt->execute();
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
-    public function verifyIdOwnership($idNumber, $userId)
-    {
-        // Use a COUNT or SELECT to see if a record exists with BOTH values
-        $stmt = $this->db->prepare("SELECT id FROM users WHERE id_number = :id_number AND id = :id LIMIT 1");
-        $stmt->bindParam(':id_number', $idNumber);
-        $stmt->bindParam(':id', $userId, PDO::PARAM_INT);
-        $stmt->execute();
 
-        // If a row is returned, the ownership is valid
-        return $stmt->fetch(PDO::FETCH_ASSOC) ? true : false;
+    public function getUserByIdNumberAndNoActiveShift($idNumber)
+    {
+        // We look for a record where time_out is NULL 
+        // AND the time_in happened TODAY.
+        $stmt = $this->db->prepare("SELECT u.id FROM users u
+        LEFT JOIN attendance a ON u.id = a.user_id 
+            AND a.time_out IS NULL 
+            AND DATE(a.time_in) = CURDATE()
+        WHERE u.id_number = :id_number 
+        AND a.id IS NULL 
+        LIMIT 1");
+
+        $stmt->bindParam(':id_number', $idNumber, PDO::PARAM_STR);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
     }
+
+    public function getUserWithActiveShift($idNumber)
+    {
+        // We want a user WHERE an active attendance record (time_out IS NULL) EXISTS
+        $stmt = $this->db->prepare("SELECT u.id, a.id as attendance_id 
+        FROM users u
+        INNER JOIN attendance a ON u.id = a.user_id 
+        WHERE u.id_number = :id_number AND a.work_date = CURDATE()
+        AND a.time_out IS NULL
+        LIMIT 1");
+        $stmt->bindParam(':id_number', $idNumber, PDO::PARAM_STR);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
     public function timeIn($idNumber, $userId)
     {
         $stmt = $this->db->prepare("INSERT INTO attendance (user_id, id_number, time_in, work_date, synced) VALUES (:user_id, :id_number, NOW(), CURDATE(), 0)");
@@ -68,31 +89,12 @@ class UsersModel
         $stmt->bindParam(':id_number', $idNumber, PDO::PARAM_STR);
         return $stmt->execute();
     }
-    public function getAttendanceByUserId($userId)
-    {
-        // We add work_date = CURDATE() to ensure we only catch shifts started today
-        $stmt = $this->db->prepare("SELECT * FROM attendance 
-            WHERE user_id = :user_id AND work_date = CURDATE() 
-            AND time_out IS NULL 
-            ORDER BY time_in DESC 
-            LIMIT 1
-        ");
-        $stmt->bindParam(':user_id', $userId, PDO::PARAM_INT);
-        $stmt->execute();
 
+    public function confirmUserByIdNumber($idNumber)
+    {
+        $stmt = $this->db->prepare("SELECT * FROM users WHERE id_number = :id_number");
+        $stmt->bindParam(':id_number', $idNumber, PDO::PARAM_STR);
+        $stmt->execute();
         return $stmt->fetch(PDO::FETCH_ASSOC);
-    }
-
-    public function getDailyLogs()
-    {
-        $sql = "SELECT a.user_id, a.id_number, a.time_in, a.time_out, u.first_name, u.last_name 
-                FROM attendance a
-                JOIN users u ON a.user_id = u.id
-                WHERE a.work_date = CURDATE()
-                ORDER BY a.time_in DESC";
-
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }

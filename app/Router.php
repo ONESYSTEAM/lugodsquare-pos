@@ -3,6 +3,7 @@
 namespace app;
 
 use app\Controllers\POSController;
+use app\Controllers\SalesController;
 use app\Controllers\ShiftController;
 use app\Controllers\UsersController;
 use app\Controllers\SyncController;
@@ -30,18 +31,22 @@ class Router
         Router::add('/print-receipt', fn() => (new POSController())->printReceipt(), 'GET');
 
         // Sync API endpoints
-        Router::add('/api/sync-trigger', fn() => (new SyncController())->handleAutoSync(), 'GET');
-        Router::add('/api/manual-trigger', fn() => (new SyncController())->pullAndPush(), 'GET');
+        // Router::add('/api/sync-trigger', fn() => (new SyncController())->handleAutoSync(), 'GET');
+        // Router::add('/api/manual-trigger', fn() => (new SyncController())->pullAndPush(), 'GET');
 
         //Cashier Shift Management
         Router::add('/end-shift', fn() => (new ShiftController())->endShift(), 'GET');
 
         //login & logout with ID route
-        Router::add('/attendance', fn() => (new UsersController())->attendance());
-        Router::add('/attendance/timeIn', fn() => (new UsersController())->timeIn($_POST['idNumber'] ?? 0), 'POST');
-        Router::add('/attendance/timeOut', fn() => (new UsersController())->timeOut($_POST['idNumber'] ?? 0), 'POST');
-        Router::add('/attendance-logs', fn() => (new UsersController())->showLogs());
+        Router::add('/attendance', fn() => Router::render('Attendance'));
+        Router::add('/attendance/submit', fn() => (new UsersController())->recordAttendace($_POST['idNumber'] ?? 0), 'POST');
+        // Router::add('/attendance/timeOut', fn() => (new UsersController())->timeOut($_POST['idNumber'] ?? 0), 'POST');
+        // Router::add('/attendance-logs', fn() => (new UsersController())->showLogs());
+        // Router::add('/check-attendance-status', fn() => (new UsersController())->checkStatus(), 'POST');
 
+        Router::add('/generate-sales-report', fn() => (new SalesController())->generateSalesReport(), 'GET');
+
+        Router::add('/payment', fn() => (new POSController())->payment(), 'POST');
 
         Router::run();
     }
