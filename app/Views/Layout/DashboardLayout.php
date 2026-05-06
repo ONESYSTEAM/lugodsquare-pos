@@ -4,8 +4,8 @@ $date = date('F d, Y');
 
 function getProductImage($imageName)
 {
-    $localPath = $_SERVER['DOCUMENT_ROOT'] . "/uploads/products/" . $imageName;
-    $localUrl = "/uploads/products/" . $imageName;
+    $localPath = $_ENV['IMG_PATH'] . $imageName;
+    $localUrl = $_ENV['IMG_PATH'] . $imageName;
     $remoteUrl = "https://admin.lugodsquare.com/uploads/products/" . $imageName;
     $placeholder = "https://placehold.co/150?text=No+Image";
 
@@ -147,7 +147,7 @@ function getProductImage($imageName)
                                         <img src="https://placehold.co/150?text=Rental" class="product-img"
                                             alt="<?= htmlspecialchars($product['product_name']) ?>">
                                     <?php else: ?>
-                                        <img src="<?= getProductImage($product['product_image']) ?>" class="product-img"
+                                        <img src="<?= $_ENV['IMG_PATH'] . $product['product_image']; ?>" class="product-img"
                                             alt="<?= htmlspecialchars($product['product_name']) ?>">
                                     <?php endif; ?>
                                     <h6 class="mt-2 mb-1"><?= htmlspecialchars($product['product_name']) ?></h6>
@@ -161,7 +161,7 @@ function getProductImage($imageName)
                     <?php endforeach; ?>
                 </div>
             <?php endforeach; ?>
-            <div class="d-flex align-items-center bg-light p-2 rounded border mt-3"
+            <!-- <div class="d-flex align-items-center bg-light p-2 rounded border mt-3"
                 style="position: sticky; bottom: 0; z-index: 10;">
                 <div id="sync-indicator" class="rounded-circle me-2"
                     style="width: 12px; height: 12px; background-color: #6c757d; transition: background-color 0.3s ease;">
@@ -178,7 +178,7 @@ function getProductImage($imageName)
                     style="font-size: 0.65rem; padding: 2px 8px;">
                     <i class="bi bi-arrow-repeat"></i> Sync
                 </button>
-            </div>
+            </div> -->
         </div>
 
         <div class="pos-sidebar" id="sidebar">
