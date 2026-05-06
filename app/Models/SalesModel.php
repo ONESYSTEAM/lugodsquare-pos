@@ -15,39 +15,52 @@ class SalesModel
     }
 
     // Add your custom methods below to interact with the database.
-    public function getSalesData($userId, $mode)
+    public function getFilteredSales($frequency, $cashierNames = [])
     {
-        // We join sales (s) and sales_items (si)
-        // s.id is used to link to si.sale_id
-        $sql = "SELECT 
-                s.transaction_no, 
-                s.sub_total, 
-                s.discount, 
-                s.final_total, 
-                s.payment_method, 
-                s.created_at,
-                si.item_name, 
-                si.qty, 
-                si.price, 
-                si.total AS item_total
-            FROM sales s
-            LEFT JOIN sales_items si ON s.id = si.sale_id
-            WHERE s.user_id = :user_id 
-            AND DATE(s.created_at) = CURDATE()";
-
-        // Filter by payment_method (matches your column name)
-        if ($mode === 'cash') {
-            $sql .= " AND s.payment_method = 'cash'";
-        } elseif ($mode === 'gcash') {
-            $sql .= " AND s.payment_method = 'gcash'";
+        $dateCondition = "";
+        switch ($frequency) {
+            case 'daily':
+                $dateCondition = "DATE(si.created_at) = CURDATE()";
+                break;
+            case 'weekly':
+                $dateCondition = "DATE(si.created_at) BETWEEN DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY) AND CURDATE()";
+                break;
+            case 'monthly':
+                $dateCondition = "MONTH(si.created_at) = MONTH(CURDATE()) AND YEAR(si.created_at) = YEAR(CURDATE())";
+                break;
+            case 'yearly':
+                $dateCondition = "YEAR(si.created_at) = YEAR(CURDATE())";
+                break;
         }
 
-        $sql .= " ORDER BY s.created_at DESC, s.transaction_no DESC";
+        $cashierCondition = "";
+        $params = [];
+        if (!empty($cashierNames)) {
+            $placeholders = implode(',', array_fill(0, count($cashierNames), '?'));
+            $cashierCondition = " AND CONCAT(u.first_name, ' ', u.last_name) IN ($placeholders)";
+            $params = $cashierNames;
+        }
+
+        $sql = "SELECT 
+                DATE(si.created_at) AS sale_date,
+                s.payment_method, 
+                CONCAT(u.first_name, ' ', u.last_name) AS cashier_name, 
+                si.item_name, 
+                SUM(si.qty) AS total_qty, 
+                si.price AS unit_price, 
+                s.final_total AS final_total,
+                ROUND(SUM(si.qty * si.price), 2) AS raw_sales, 
+                ROUND(SUM(((si.qty * si.price) / NULLIF(s.sub_total, 0)) * s.discount), 2) AS total_discount, 
+                ROUND(SUM((si.qty * si.price) - (((si.qty * si.price) / NULLIF(s.sub_total, 0)) * s.discount)), 2) AS total_sales
+            FROM sales_items si
+            JOIN sales s ON si.sale_id = s.id
+            JOIN users u ON s.user_id = u.id
+            WHERE $dateCondition $cashierCondition
+            GROUP BY sale_date, s.payment_method, cashier_name, si.item_name, si.price
+            ORDER BY s.payment_method ASC, sale_date DESC";
 
         $stmt = $this->db->prepare($sql);
-        $stmt->bindParam(':user_id', $userId, \PDO::PARAM_INT);
-        $stmt->execute();
-
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }

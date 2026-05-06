@@ -69,8 +69,8 @@ class POSModel
         $stmt->bindParam(':card_number', $cardNumber, PDO::PARAM_STR);
         $stmt->bindParam(':user_id', $userId, PDO::PARAM_INT);
 
-        $stmt->bindValue(':cash_amount', $cashAmount !== null ? number_format((float)$cashAmount, 2, '.', '') : null);
-        $stmt->bindValue(':cash_change', $cashChange !== null ? number_format((float)$cashChange, 2, '.', '') : null);
+        $stmt->bindValue(':cash_amount', $cashAmount !== null ? number_format((float) $cashAmount, 2, '.', '') : null);
+        $stmt->bindValue(':cash_change', $cashChange !== null ? number_format((float) $cashChange, 2, '.', '') : null);
 
         return $stmt->execute();
     }
@@ -111,7 +111,7 @@ class POSModel
 
     public function getProductByName($productName)
     {
-        $stmt = $this->db->prepare("SELECT qty FROM products WHERE product_name = :product_name");
+        $stmt = $this->db->prepare("SELECT * FROM products WHERE product_name = :product_name");
         $stmt->bindParam(':product_name', $productName, PDO::PARAM_STR);
         $stmt->execute();
         return $stmt->fetch(PDO::FETCH_ASSOC);
@@ -198,6 +198,76 @@ class POSModel
         $stmt->bindParam(':sale_id', $saleId, PDO::PARAM_INT);
         $stmt->bindParam(':item_name', $itemName, PDO::PARAM_STR);
         $stmt->bindParam(':amount', $amount, PDO::PARAM_STR);
+        return $stmt->execute();
+    }
+
+    public function insertInventoryLog($data)
+    {
+        $stmt = $this->db->prepare("INSERT INTO inventory_logs (product_id, quantity, remarks, balance_after, type, transaction_date, synced) VALUES (:productId, :qty, :remarks, :newBalance, :type, NOW(), 0)");
+        $stmt->bindParam(':productId', $data['product_id'], PDO::PARAM_INT);
+        $stmt->bindParam(':qty', $data['quantity'], PDO::PARAM_INT);
+        $stmt->bindParam(':remarks', $data['remarks'], PDO::PARAM_STR);
+        $stmt->bindParam(':newBalance', $data['balance_after'], PDO::PARAM_INT);
+        $stmt->bindParam(':type', $data['type'], PDO::PARAM_STR);
+        return $stmt->execute();
+    }
+
+    public function insertSavedCart($customerName, $ordersJson, $subtotal, $total, $userId)
+    {
+        $stmt = $this->db->prepare("
+        INSERT INTO saved_carts (customer_name, orders, subtotal, total, cashier_id, created_at)
+        VALUES (:customer_name, :orders, :subtotal, :total, :cashier_id, NOW())
+    ");
+
+        $stmt->bindParam(':customer_name', $customerName, PDO::PARAM_STR);
+        $stmt->bindParam(':orders', $ordersJson, PDO::PARAM_STR);
+        $stmt->bindParam(':subtotal', $subtotal, PDO::PARAM_STR);
+        $stmt->bindParam(':total', $total, PDO::PARAM_STR);
+        $stmt->bindParam(':cashier_id', $userId, PDO::PARAM_INT);
+
+        return $stmt->execute();
+    }
+
+    public function fetchSavedCarts($userId)
+    {
+        // Shows all cashiers' saved carts so any cashier can load a tab
+        // If you want per-cashier only, add: WHERE user_id = :user_id
+        $stmt = $this->db->prepare("
+        SELECT 
+            id,
+            customer_name,
+            JSON_LENGTH(orders) AS item_count,
+            total,
+            created_at
+        FROM saved_carts
+        ORDER BY created_at DESC
+    ");
+
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function fetchSavedCartById($cartId)
+    {
+        $stmt = $this->db->prepare("
+        SELECT id, customer_name, orders, subtotal, total
+        FROM saved_carts
+        WHERE id = :id
+        LIMIT 1
+    ");
+
+        $stmt->bindParam(':id', $cartId, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function deleteSavedCartById($cartId)
+    {
+        $stmt = $this->db->prepare("
+        DELETE FROM saved_carts WHERE id = :id
+    ");
+
+        $stmt->bindParam(':id', $cartId, PDO::PARAM_INT);
         return $stmt->execute();
     }
 }

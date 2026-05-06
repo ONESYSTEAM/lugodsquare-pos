@@ -98,14 +98,14 @@ class POSController
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header('Content-Type: application/json');
 
-            $transactionNo  = $_POST['transaction_no'] ?? '';
-            $subTotal       = $_POST['subtotal'] ?? 0;
-            $discount       = $_POST['discount'] ?? 0;
-            $finalTotal     = $_POST['final_total'] ?? 0;
-            $paymentMethod  = $_POST['payment_mode'] ?? '';
-            $orders         = json_decode($_POST['orders'] ?? '[]', true);
-            $userId         = $_SESSION['user_id'] ?? '';
-            $cardNumber     = $_POST['card_number'] ?? '';
+            $transactionNo = $_POST['transaction_no'] ?? '';
+            $subTotal = $_POST['subtotal'] ?? 0;
+            $discount = $_POST['discount'] ?? 0;
+            $finalTotal = $_POST['final_total'] ?? 0;
+            $paymentMethod = $_POST['payment_mode'] ?? '';
+            $orders = json_decode($_POST['orders'] ?? '[]', true);
+            $userId = $_SESSION['user_id'] ?? '';
+            $cardNumber = $_POST['card_number'] ?? '';
             $cashAmount = isset($_POST['cash_amount']) ? floatval($_POST['cash_amount']) : null;
             $cashChange = isset($_POST['cash_change']) ? floatval($_POST['cash_change']) : null;
 
@@ -137,6 +137,18 @@ class POSController
                         if ($product && isset($product['qty'])) {
                             $updatedQty = $product['qty'] - $order['qty'];
                             $this->POSModel->updateProductQty($order['name'], $updatedQty);
+
+                            // 2. Add the Running Stock Log (The new "Date Out" feature)
+                            // Only log if it's NOT a rental (assuming rentals don't have physical stock)
+                            if (strtolower($product['product_category']) !== 'rentals') {
+                                $this->POSModel->insertInventoryLog([
+                                    'product_id' => $product['id'],
+                                    'type' => 'OUT',
+                                    'quantity' => $order['qty'],
+                                    'balance_after' => $updatedQty,
+                                    'remarks' => "POS Sale: " . $transactionNo
+                                ]);
+                            }
                         }
                     }
 
@@ -190,18 +202,20 @@ class POSController
             : 'Cashier';
 
         $addSpaces = function ($string = '', $validLen = 0) {
-            $string = (string)$string;
+            $string = (string) $string;
             if (strlen($string) < $validLen) {
                 $string .= str_repeat(' ', $validLen - strlen($string));
             }
             return $string;
         };
 
-        $cashAmount = isset($sale['cash_amount']) ? (float)$sale['cash_amount'] : null;
-        $cashChange = isset($sale['cash_change']) ? (float)$sale['cash_change'] : null;
+        $cashAmount = isset($sale['cash_amount']) ? (float) $sale['cash_amount'] : null;
+        $cashChange = isset($sale['cash_change']) ? (float) $sale['cash_change'] : null;
 
-        if ($cashAmount === null && isset($_GET['cash_amount'])) $cashAmount = (float)$_GET['cash_amount'];
-        if ($cashChange === null && isset($_GET['cash_change'])) $cashChange = (float)$_GET['cash_change'];
+        if ($cashAmount === null && isset($_GET['cash_amount']))
+            $cashAmount = (float) $_GET['cash_amount'];
+        if ($cashChange === null && isset($_GET['cash_change']))
+            $cashChange = (float) $_GET['cash_change'];
 
         try {
             require(__DIR__ . '/../../vendor/autoload.php');
@@ -241,10 +255,10 @@ class POSController
             $printer->feed(1);
 
             foreach ($items as $item) {
-                $qty = (int)($item['qty'] ?? 1);
-                $price = (float)($item['price'] ?? 0);
-                $lineTotal = (float)($item['total'] ?? ($qty * $price));
-                $name = (string)($item['item_name'] ?? 'Item');
+                $qty = (int) ($item['qty'] ?? 1);
+                $price = (float) ($item['price'] ?? 0);
+                $lineTotal = (float) ($item['total'] ?? ($qty * $price));
+                $name = (string) ($item['item_name'] ?? 'Item');
 
                 $label = $qty . 'x' . number_format($price, 2) . ' - ' . $name;
 
@@ -265,24 +279,26 @@ class POSController
 
                 for ($i = 0; $i < $counter; $i++) {
                     $line = '';
-                    if (isset($name_lines[$i])) $line .= $name_lines[$i];
-                    if (isset($subtotal_lines[$i])) $line .= $subtotal_lines[$i];
+                    if (isset($name_lines[$i]))
+                        $line .= $name_lines[$i];
+                    if (isset($subtotal_lines[$i]))
+                        $line .= $subtotal_lines[$i];
                     $printer->text($line . "\n");
                 }
             }
 
             $printer->feed(1);
             $printer->text("------------------------------\n");
-            $printer->text($addSpaces('SUBTOTAL', 20) . $addSpaces(number_format((float)$sale['sub_total'], 2), 10) . "\n");
-            $printer->text($addSpaces('DISCOUNT', 20) . $addSpaces(number_format((float)$sale['discount'], 2), 10) . "\n");
+            $printer->text($addSpaces('SUBTOTAL', 20) . $addSpaces(number_format((float) $sale['sub_total'], 2), 10) . "\n");
+            $printer->text($addSpaces('DISCOUNT', 20) . $addSpaces(number_format((float) $sale['discount'], 2), 10) . "\n");
 
             $printer->setEmphasis(true);
-            $printer->text($addSpaces('TOTAL', 20) . $addSpaces(number_format((float)$sale['final_total'], 2), 10) . "\n");
+            $printer->text($addSpaces('TOTAL', 20) . $addSpaces(number_format((float) $sale['final_total'], 2), 10) . "\n");
             $printer->setEmphasis(false);
 
-            if (strtolower((string)$sale['payment_method']) === 'cash') {
-                $printer->text($addSpaces('CASH', 20) . $addSpaces(number_format((float)($cashAmount ?? 0), 2), 10) . "\n");
-                $printer->text($addSpaces('CHANGE', 20) . $addSpaces(number_format((float)($cashChange ?? 0), 2), 10) . "\n");
+            if (strtolower((string) $sale['payment_method']) === 'cash') {
+                $printer->text($addSpaces('CASH', 20) . $addSpaces(number_format((float) ($cashAmount ?? 0), 2), 10) . "\n");
+                $printer->text($addSpaces('CHANGE', 20) . $addSpaces(number_format((float) ($cashChange ?? 0), 2), 10) . "\n");
             }
 
             $printer->feed(2);
@@ -339,7 +355,7 @@ class POSController
             $adminUsername = $_POST['username'] ?? '';
             $admin = $this->POSModel->getAdminUserByUsername($adminUsername);
 
-            if ($admin && isset($admin['user_type']) && (int)$admin['user_type'] === 1) {
+            if ($admin && isset($admin['user_type']) && (int) $admin['user_type'] === 1) {
                 echo json_encode(['status' => 'success', 'valid' => true]);
             } else {
                 echo json_encode(['status' => 'error', 'message' => 'Not authorized']);
@@ -433,29 +449,132 @@ class POSController
 
     public function payment()
     {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        // Set header to JSON so the browser knows what's coming
+        header('Content-Type: application/json');
 
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $transactionNo = $_POST['transaction_no'] ?? '';
             $paymentMethod = $_POST['payment_method'] ?? '';
             $amount = floatval($_POST['amount'] ?? 0);
             $cashierId = $_SESSION['user_id'] ?? '';
 
-            $itemName = $paymentMethod == 'Gcash' ? 'Gcash Walk-in Payment' : 'Cash Walk-in Payment';
+            $itemName = ($paymentMethod === 'Gcash') ? 'Gcash Walk-in Payment' : 'Cash Walk-in Payment';
 
             $pay = $this->POSModel->payment($transactionNo, $paymentMethod, $amount, $cashierId);
-            $saleId = $this->POSModel->getSalesIdByTransactionNo($transactionNo);
-            if ($saleId) {
-                $payItems = $this->POSModel->paymentItems($itemName, $amount, $saleId['id']);
+            $saleData = $this->POSModel->getSalesIdByTransactionNo($transactionNo);
+
+            $payItems = false;
+            if ($saleData) {
+                $payItems = $this->POSModel->paymentItems($itemName, $amount, $saleData['id']);
             }
 
             if ($pay && $payItems) {
-                $_SESSION['success'][] = 'Payment recorded successfully.';
-                header('Location: /');
-                exit();
+                echo json_encode([
+                    'status' => 'success',
+                    'message' => 'Payment of ₱' . number_format($amount, 2) . ' recorded successfully!'
+                ]);
             } else {
-                $_SESSION['danger'][] = 'Failed to record payment.';
-                header('Location: /');
-                exit();
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'Database error: Could not record payment.'
+                ]);
+            }
+            exit;
+        }
+    }
+
+    public function saveCart()
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            header('Content-Type: application/json');
+
+            $customerName = trim($_POST['customer_name'] ?? '');
+            $orders = $_POST['orders'] ?? '[]';
+            $subtotal = $_POST['subtotal'] ?? 0;
+            $total = $_POST['total'] ?? 0;
+            $userId = $_SESSION['user_id'] ?? null;
+
+            if (empty($customerName) || $orders === '[]') {
+                echo json_encode(['status' => 'error', 'message' => 'Invalid cart data.']);
+                return;
+            }
+
+            // Validate orders is proper JSON
+            $decoded = json_decode($orders, true);
+            if (!is_array($decoded) || empty($decoded)) {
+                echo json_encode(['status' => 'error', 'message' => 'Orders data is invalid.']);
+                return;
+            }
+
+            $result = $this->POSModel->insertSavedCart($customerName, $orders, $subtotal, $total, $userId);
+
+            if ($result) {
+                echo json_encode(['status' => 'success', 'message' => 'Cart saved successfully.']);
+            } else {
+                echo json_encode(['status' => 'error', 'message' => 'Failed to save cart.']);
+            }
+        }
+    }
+
+    public function getSavedCarts()
+    {
+        header('Content-Type: application/json');
+
+        $userId = $_SESSION['user_id'] ?? null;
+        $carts = $this->POSModel->fetchSavedCarts($userId);
+
+        echo json_encode(['status' => 'success', 'carts' => $carts ?: []]);
+    }
+
+    public function loadCart()
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            header('Content-Type: application/json');
+
+            $cartId = intval($_POST['cart_id'] ?? 0);
+
+            if ($cartId <= 0) {
+                echo json_encode(['status' => 'error', 'message' => 'Invalid cart ID.']);
+                return;
+            }
+
+            $cart = $this->POSModel->fetchSavedCartById($cartId);
+
+            if (!$cart) {
+                echo json_encode(['status' => 'error', 'message' => 'Cart not found.']);
+                return;
+            }
+
+            $orders = json_decode($cart['orders'], true);
+
+            echo json_encode([
+                'status' => 'success',
+                'customer_name' => $cart['customer_name'],
+                'orders' => $orders,
+                'subtotal' => $cart['subtotal'],
+                'total' => $cart['total'],
+            ]);
+        }
+    }
+
+    public function deleteSavedCart()
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            header('Content-Type: application/json');
+
+            $cartId = intval($_POST['cart_id'] ?? 0);
+
+            if ($cartId <= 0) {
+                echo json_encode(['status' => 'error', 'message' => 'Invalid cart ID.']);
+                return;
+            }
+
+            $result = $this->POSModel->deleteSavedCartById($cartId);
+
+            if ($result) {
+                echo json_encode(['status' => 'success']);
+            } else {
+                echo json_encode(['status' => 'error', 'message' => 'Failed to delete cart.']);
             }
         }
     }

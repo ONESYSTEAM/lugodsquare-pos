@@ -1,9 +1,11 @@
 $(document).ready(function () {
+  // At the very top of $(document).ready, with the other let declarations
+  let orders = {};
+  let activeLoadedCartId = null; // ← move here, remove from bottom
+
   const orderList = $(".order-list .p-3");
   const totalDisplay = $(".bg-custom p span.fw-bold");
   const subTotalDisplay = $("#subTotal small");
-
-  let orders = {};
 
   // ✅ helper: trigger server-side printing
   function triggerPrint(printUrl) {
@@ -75,13 +77,33 @@ $(document).ready(function () {
   });
 
   $(document).on("click", function (e) {
+    // Order item deselect
     const isInsideOrder = $(e.target).closest(".order-item").length > 0;
-    const isActionButton = $(e.target).is("#editItemBtn, #removeItemBtn");
-
-    if (!isInsideOrder && !isActionButton) {
+    const isOrderAction = $(e.target).is("#editItemBtn, #removeItemBtn");
+    if (!isInsideOrder && !isOrderAction) {
       $(".order-item").removeClass("selected");
       selectedItem = null;
       $("#editItemBtn, #removeItemBtn").prop("disabled", true);
+    }
+
+    // Transaction item deselect
+    const isInsideTransaction =
+      $(e.target).closest(".transaction-item").length > 0;
+    const isTransactionAction = $(e.target).is("#viewBtn, #removeBtn");
+    if (!isInsideTransaction && !isTransactionAction) {
+      $(".transaction-item").removeClass("selected");
+      selectedTransaction = null;
+      $("#viewBtn, #removeBtn").prop("disabled", true);
+    }
+
+    // Saved cart deselect
+    const isInsideSavedCart =
+      $(e.target).closest(".saved-cart-item").length > 0;
+    const isSavedCartAction = $(e.target).is("#loadCartBtn, #deleteCartBtn");
+    if (!isInsideSavedCart && !isSavedCartAction) {
+      $(".saved-cart-item").removeClass("selected");
+      selectedSavedCart = null;
+      $("#loadCartBtn, #deleteCartBtn").prop("disabled", true);
     }
   });
 
@@ -200,10 +222,12 @@ $(document).ready(function () {
                         <label class="form-label" id="paymentOptionLbl">Cash Payment</label>
                         <div class="col-12">
                             <input type="number" id="amountPaid" class="form-control" placeholder="Enter Cash Amount">
+                            <input type="number" id="gcashPayment" class="form-control d-none" placeholder="Enter Gcash Amount">
                             <input type="text" id="cardPayment" class="form-control d-none" placeholder="Scan or enter card number">
                         </div>
                         <div class="col-12 mt-2" id="paymentOptionBtn">
                             <button class="btn btn-outline-custom btn-sm" id="cardPaymentBtn">Pay with Card </button>
+                            <button class="btn btn-outline-custom btn-sm" id="gcashPaymentBtn">Pay with Gcash </button>
                         </div>
                         <div class="mt-2 d-none" id="undoPaymentCon">
                             <button class="btn btn-custom btn-sm" id="undoPaymentBtn">Undo Card Payment</button>
@@ -220,6 +244,20 @@ $(document).ready(function () {
     modalBody
       .off("input", "#amountPaid")
       .on("input", "#amountPaid", function () {
+        const paid = parseFloat($(this).val()) || 0;
+        const currentTotal =
+          parseFloat(
+            $("#receiptTotal").text().replace("₱", "").replace(/,/g, ""),
+          ) || 0;
+        const change = paid - currentTotal;
+        $("#receiptChange").text(
+          change >= 0 ? "₱" + change.toFixed(2) : "Insufficient",
+        );
+      });
+
+    modalBody
+      .off("input", "#gcashPayment")
+      .on("input", "#gcashPayment", function () {
         const paid = parseFloat($(this).val()) || 0;
         const currentTotal =
           parseFloat(
@@ -400,6 +438,7 @@ $(document).ready(function () {
       $(this).text("Pay with Card");
       $("#paymentOptionLbl").text("Cash Payment");
       $("#amountPaid").val("");
+      $("#receiptChange").text("₱0.00");
     } else {
       $("#amountPaid").addClass("d-none");
       $("#gcashPayment").addClass("d-none");
@@ -419,6 +458,8 @@ $(document).ready(function () {
       $("#amountPaid").removeClass("d-none").trigger("focus");
       $(this).text("Pay with Gcash");
       $("#paymentOptionLbl").text("Cash Payment");
+      $("#amountPaid").val("");
+      $("#receiptChange").text("₱0.00");
     } else {
       $("#amountPaid").addClass("d-none");
       $("#cardPayment").addClass("d-none");
@@ -426,6 +467,8 @@ $(document).ready(function () {
       $("#cardPaymentBtn").text("Pay with Card");
       $(this).text("Pay with Cash");
       $("#paymentOptionLbl").text("Walk-in Gcash Payment");
+      $("#receiptChange").text("₱0.00");
+      $("#gcashPayment").val("");
     }
   });
 
@@ -609,9 +652,9 @@ $(document).ready(function () {
             cash_amount: cashAmount,
             cash_change: cashChange,
           },
+          // REPLACE this block in confirmTransaction():
           success: function (response) {
             if (response.status === "success") {
-              // ✅ PRINT AFTER SUCCESS (wait for print result, then reload)
               triggerPrint(response.print_url).then((printRes) => {
                 if (printRes && printRes.status === "success") {
                   Swal.fire({
@@ -622,6 +665,13 @@ $(document).ready(function () {
                     showConfirmButton: false,
                   }).then(() => {
                     clearCardPaymentState();
+                    // ✅ delete AFTER everything is done
+                    if (activeLoadedCartId) {
+                      $.post("/delete-saved-cart", {
+                        cart_id: activeLoadedCartId,
+                      });
+                      activeLoadedCartId = null;
+                    }
                     location.reload();
                   });
                 } else {
@@ -633,16 +683,19 @@ $(document).ready(function () {
                       (printRes?.message ? "(" + printRes.message + ")" : ""),
                   }).then(() => {
                     clearCardPaymentState();
+                    // ✅ also clean up on print failure since transaction did save
+                    if (activeLoadedCartId) {
+                      $.post("/delete-saved-cart", {
+                        cart_id: activeLoadedCartId,
+                      });
+                      activeLoadedCartId = null;
+                    }
                     location.reload();
                   });
                 }
               });
-            } else {
-              Swal.fire({
-                icon: "error",
-                title: "Error",
-                text: response.message || "Failed to record transaction.",
-              });
+
+              // ❌ REMOVE the if (activeLoadedCartId) block that was here
             }
           },
           error: function () {
@@ -827,15 +880,19 @@ $(document).ready(function () {
 
   $("#orderSumBtn").on("click", function () {
     $("#transactionSideBar").addClass("d-none");
+    $("#savedCartsSideBar").addClass("d-none");
     $("#sidebar").removeClass("d-none");
     $("#transactionBtn").removeClass("d-none");
+    $("#savedCartsBtn").removeClass("d-none");
     $(this).addClass("d-none");
   });
 
   $("#transactionBtn").on("click", function () {
     $("#transactionSideBar").removeClass("d-none");
+    $("#savedCartsSideBar").addClass("d-none");
     $("#sidebar").addClass("d-none");
     $("#orderSumBtn").removeClass("d-none");
+    $("#savedCartsBtn").removeClass("d-none");
     $(this).addClass("d-none");
   });
 
@@ -848,18 +905,6 @@ $(document).ready(function () {
     if (selectedTransaction) {
       $("#viewBtn").prop("disabled", false);
       $("#removeBtn").prop("disabled", false);
-    }
-  });
-
-  $(document).on("click", function (e) {
-    const isInsideTransaction =
-      $(e.target).closest(".transaction-item").length > 0;
-    const isActionButton = $(e.target).is("#viewBtn, #removeBtn");
-
-    if (!isInsideTransaction && !isActionButton) {
-      $(".transaction-item").removeClass("selected");
-      selectedTransaction = null;
-      $("#viewBtn, #removeBtn").prop("disabled", true);
     }
   });
 
@@ -1026,4 +1071,267 @@ $(document).ready(function () {
       }
     });
   });
+
+  // ─── SAVED CARTS ───────────────────────────────────────────────────────────
+
+  let selectedSavedCart = null;
+
+  // Load saved carts from server and render the list
+  function loadSavedCarts() {
+    $.ajax({
+      url: "/saved-carts",
+      method: "GET",
+      dataType: "json",
+      success: function (response) {
+        const list = $(".saved-carts-list");
+        list.empty();
+
+        const carts = response.carts || [];
+
+        // Update badge count in header button
+        if (carts.length > 0) {
+          $("#savedCartsBadge").text(carts.length).removeClass("d-none");
+        } else {
+          $("#savedCartsBadge").addClass("d-none");
+        }
+
+        if (carts.length === 0) {
+          list.html(
+            '<div class="text-center p-3"><small class="text-muted">No saved carts</small></div>',
+          );
+          return;
+        }
+
+        carts.forEach(function (cart) {
+          list.append(`
+          <div class="transaction-item d-flex mx-3 justify-content-between flex-column saved-cart-item" data-cart-id="${cart.id}">
+            <input type="hidden" class="cartId" value="${cart.id}">
+            <span class="fw-bold">${cart.customer_name}</span>
+            <small class="ps-1">${cart.item_count} item(s) &mdash; ₱${parseFloat(cart.total).toFixed(2)}</small>
+            <small class="text-muted ps-1">${new Date(cart.created_at).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}</small>
+          </div>
+        `);
+        });
+      },
+      error: function () {
+        $(".saved-carts-list").html(
+          '<div class="text-center p-3"><small class="text-danger">Failed to load carts</small></div>',
+        );
+      },
+    });
+  }
+
+  loadSavedCarts();
+
+  // Show/hide saved carts sidebar
+  $("#savedCartsBtn").on("click", function () {
+    $("#sidebar").addClass("d-none");
+    $("#transactionSideBar").addClass("d-none");
+    $("#savedCartsSideBar").removeClass("d-none");
+    $("#orderSumBtn").removeClass("d-none");
+    $("#transactionBtn").removeClass("d-none");
+    $(this).addClass("d-none");
+    loadSavedCarts();
+  });
+
+  // Select a saved cart item
+  $(document).on("click", ".saved-cart-item", function () {
+    $(".saved-cart-item").removeClass("selected");
+    $(this).addClass("selected");
+    selectedSavedCart = $(this).data("cart-id");
+    $("#loadCartBtn, #deleteCartBtn").prop("disabled", false);
+  });
+
+  // Load cart back into active order
+  $("#loadCartBtn").on("click", function () {
+    if (!selectedSavedCart) return;
+
+    if (!$.isEmptyObject(orders)) {
+      Swal.fire({
+        icon: "warning",
+        title: "Active order exists",
+        text: "Clear the current order before loading a saved cart.",
+      });
+      return;
+    }
+
+    $.ajax({
+      url: "/load-cart",
+      method: "POST",
+      dataType: "json",
+      data: { cart_id: selectedSavedCart },
+      success: function (response) {
+        if (response.status === "success") {
+          orders = {};
+          response.orders.forEach(function (item) {
+            orders[item.name] = {
+              qty: item.qty,
+              price: parseFloat(item.price),
+            };
+          });
+
+          renderOrderList();
+
+          // Switch to order sidebar
+          $("#savedCartsSideBar").addClass("d-none");
+          $("#sidebar").removeClass("d-none");
+          $("#orderSumBtn").addClass("d-none");
+          $("#transactionBtn").removeClass("d-none");
+
+          // Update the transaction number display
+          $("#transaction-number").text(
+            response.transaction_no || $("#transaction-number").text(),
+          );
+
+          Swal.fire({
+            icon: "success",
+            title: "Cart loaded!",
+            text: `${response.customer_name}'s order is ready.`,
+            timer: 1500,
+            showConfirmButton: false,
+          });
+
+          activeLoadedCartId = selectedSavedCart;
+
+          loadSavedCarts(); // refresh badge
+        } else {
+          Swal.fire(
+            "Error",
+            response.message || "Failed to load cart.",
+            "error",
+          );
+        }
+      },
+      error: function () {
+        Swal.fire("Server Error", "Unable to load cart.", "error");
+      },
+    });
+  });
+
+  // Delete a saved cart
+  $("#deleteCartBtn").on("click", function () {
+    if (!selectedSavedCart) return;
+
+    const cartName = $(".saved-cart-item.selected").find(".fw-bold").text();
+
+    Swal.fire({
+      title: `Delete ${cartName}'s cart?`,
+      text: "This cannot be undone.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      confirmButtonText: "Delete",
+    }).then(function (result) {
+      if (result.isConfirmed) {
+        $.ajax({
+          url: "/delete-saved-cart",
+          method: "POST",
+          dataType: "json",
+          data: { cart_id: selectedSavedCart },
+          success: function (response) {
+            if (response.status === "success") {
+              selectedSavedCart = null;
+              $("#loadCartBtn, #deleteCartBtn").prop("disabled", true);
+              loadSavedCarts();
+              Swal.fire({
+                icon: "success",
+                title: "Cart deleted",
+                timer: 1200,
+                showConfirmButton: false,
+              });
+            } else {
+              Swal.fire("Error", response.message, "error");
+            }
+          },
+          error: function () {
+            Swal.fire("Server Error", "Could not delete cart.", "error");
+          },
+        });
+      }
+    });
+  });
+
+  // Save current order as a cart (pay later)
+  $("#saveCartBtn").on("click", function () {
+    if ($.isEmptyObject(orders)) {
+      Swal.fire({
+        icon: "warning",
+        title: "No items",
+        text: "Add items before saving a cart.",
+      });
+      return;
+    }
+
+    Swal.fire({
+      title: "Save Cart",
+      input: "text",
+      inputLabel: "Customer name",
+      inputPlaceholder: "e.g. Juan dela Cruz",
+      inputAttributes: { maxlength: 80 },
+      showCancelButton: true,
+      confirmButtonText: "Save",
+      inputValidator: (value) => {
+        if (!value?.trim()) return "Please enter a customer name.";
+      },
+    }).then(function (result) {
+      if (result.isConfirmed) {
+        const customerName = result.value.trim();
+        const orderData = [];
+        let subtotal = 0;
+
+        $.each(orders, function (name, item) {
+          const total = item.qty * item.price;
+          subtotal += total;
+          orderData.push({
+            name,
+            qty: item.qty,
+            price: item.price,
+            total: total.toFixed(2),
+          });
+        });
+
+        $.ajax({
+          url: "/save-cart",
+          method: "POST",
+          dataType: "json",
+          data: {
+            customer_name: customerName,
+            orders: JSON.stringify(orderData),
+            subtotal: subtotal.toFixed(2),
+            total: subtotal.toFixed(2),
+          },
+          success: function (response) {
+            if (response.status === "success") {
+              // Clear the current order
+              orders = {};
+              renderOrderList();
+              loadSavedCarts(); // refresh badge
+
+              Swal.fire({
+                icon: "success",
+                title: "Cart saved!",
+                text: `${customerName}'s order saved. You can load it when they're ready to pay.`,
+                timer: 2000,
+                showConfirmButton: false,
+              });
+            } else {
+              Swal.fire(
+                "Error",
+                response.message || "Could not save cart.",
+                "error",
+              );
+            }
+          },
+          error: function () {
+            Swal.fire("Server Error", "Unable to save cart.", "error");
+          },
+        });
+      }
+    });
+  });
+
+  // Also auto-delete the saved cart after a successful confirm-transaction
+  // Patch into the existing confirmTransaction success handler:
+  // After `location.reload()` in the success block, add a call to
+  // /delete-saved-cart if a cart was loaded. Track this with a variable:
 });

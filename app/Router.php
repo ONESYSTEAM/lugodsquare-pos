@@ -31,7 +31,7 @@ class Router
         Router::add('/print-receipt', fn() => (new POSController())->printReceipt(), 'GET');
 
         // Sync API endpoints
-        // Router::add('/api/sync-trigger', fn() => (new SyncController())->handleAutoSync(), 'GET');
+        Router::add('/api/sync-trigger', fn() => (new SyncController())->handleAutoSync(), 'GET');
         // Router::add('/api/manual-trigger', fn() => (new SyncController())->pullAndPush(), 'GET');
 
         //Cashier Shift Management
@@ -47,6 +47,12 @@ class Router
         Router::add('/generate-sales-report', fn() => (new SalesController())->generateSalesReport(), 'GET');
 
         Router::add('/payment', fn() => (new POSController())->payment(), 'POST');
+
+        // Add to cart routes
+        Router::add('/save-cart', fn() => (new POSController())->saveCart(), 'POST');
+        Router::add('/saved-carts', fn() => (new POSController())->getSavedCarts(), 'GET');
+        Router::add('/load-cart', fn() => (new POSController())->loadCart(), 'POST');
+        Router::add('/delete-saved-cart', fn() => (new POSController())->deleteSavedCart(), 'POST');
 
         Router::run();
     }
