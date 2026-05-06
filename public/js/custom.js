@@ -2,6 +2,7 @@ $(document).ready(function () {
   // At the very top of $(document).ready, with the other let declarations
   let orders = {};
   let activeLoadedCartId = null; // ← move here, remove from bottom
+  let activeLoadedCartName = null;
 
   const orderList = $(".order-list .p-3");
   const totalDisplay = $(".bg-custom p span.fw-bold");
@@ -671,6 +672,7 @@ $(document).ready(function () {
                         cart_id: activeLoadedCartId,
                       });
                       activeLoadedCartId = null;
+                      activeLoadedCartName = null;
                     }
                     location.reload();
                   });
@@ -1176,6 +1178,7 @@ $(document).ready(function () {
           $("#savedCartsSideBar").addClass("d-none");
           $("#sidebar").removeClass("d-none");
           $("#orderSumBtn").addClass("d-none");
+          $("#savedCartsBtn").removeClass("d-none");
           $("#transactionBtn").removeClass("d-none");
 
           // Update the transaction number display
@@ -1192,6 +1195,7 @@ $(document).ready(function () {
           });
 
           activeLoadedCartId = selectedSavedCart;
+          activeLoadedCartName = response.customer_name;
 
           loadSavedCarts(); // refresh badge
         } else {
@@ -1262,6 +1266,12 @@ $(document).ready(function () {
       return;
     }
 
+    // If a cart is already loaded, skip the name prompt
+    if (activeLoadedCartId) {
+      resaveCart(activeLoadedCartName);
+      return;
+    }
+
     Swal.fire({
       title: "Save Cart",
       input: "text",
@@ -1275,60 +1285,68 @@ $(document).ready(function () {
       },
     }).then(function (result) {
       if (result.isConfirmed) {
-        const customerName = result.value.trim();
-        const orderData = [];
-        let subtotal = 0;
-
-        $.each(orders, function (name, item) {
-          const total = item.qty * item.price;
-          subtotal += total;
-          orderData.push({
-            name,
-            qty: item.qty,
-            price: item.price,
-            total: total.toFixed(2),
-          });
-        });
-
-        $.ajax({
-          url: "/save-cart",
-          method: "POST",
-          dataType: "json",
-          data: {
-            customer_name: customerName,
-            orders: JSON.stringify(orderData),
-            subtotal: subtotal.toFixed(2),
-            total: subtotal.toFixed(2),
-          },
-          success: function (response) {
-            if (response.status === "success") {
-              // Clear the current order
-              orders = {};
-              renderOrderList();
-              loadSavedCarts(); // refresh badge
-
-              Swal.fire({
-                icon: "success",
-                title: "Cart saved!",
-                text: `${customerName}'s order saved. You can load it when they're ready to pay.`,
-                timer: 2000,
-                showConfirmButton: false,
-              });
-            } else {
-              Swal.fire(
-                "Error",
-                response.message || "Could not save cart.",
-                "error",
-              );
-            }
-          },
-          error: function () {
-            Swal.fire("Server Error", "Unable to save cart.", "error");
-          },
-        });
+        resaveCart(result.value.trim());
       }
     });
   });
+
+  function resaveCart(customerName) {
+    const orderData = [];
+    let subtotal = 0;
+
+    $.each(orders, function (name, item) {
+      const total = item.qty * item.price;
+      subtotal += total;
+      orderData.push({
+        name,
+        qty: item.qty,
+        price: item.price,
+        total: total.toFixed(2),
+      });
+    });
+
+    $.ajax({
+      url: "/save-cart",
+      method: "POST",
+      dataType: "json",
+      data: {
+        customer_name: customerName,
+        orders: JSON.stringify(orderData),
+        subtotal: subtotal.toFixed(2),
+        total: subtotal.toFixed(2),
+      },
+      success: function (response) {
+        if (response.status === "success") {
+          if (activeLoadedCartId) {
+            $.post("/delete-saved-cart", { cart_id: activeLoadedCartId });
+            activeLoadedCartId = null;
+            activeLoadedCartName = null;
+          }
+
+          orders = {};
+          renderOrderList();
+          loadSavedCarts();
+
+          Swal.fire({
+            icon: "success",
+            title: "Cart saved!",
+            text: `${customerName}'s order saved. You can load it when they're ready to pay.`,
+            timer: 2000,
+            showConfirmButton: false,
+          });
+        } else {
+          Swal.fire(
+            "Error",
+            response.message || "Could not save cart.",
+            "error",
+          );
+        }
+      },
+      error: function () {
+        Swal.fire("Server Error", "Unable to save cart.", "error");
+      },
+    });
+  }
 
   // Also auto-delete the saved cart after a successful confirm-transaction
   // Patch into the existing confirmTransaction success handler:
