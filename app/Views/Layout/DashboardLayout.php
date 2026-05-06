@@ -418,51 +418,51 @@ function getProductImage($imageName)
             });
         });
 
-        let isSyncing = false;
+        // let isSyncing = false;
 
-        async function runAutoSync() {
-            const indicator = document.getElementById('sync-indicator');
-            const statusText = document.getElementById('sync-status');
-            const timeText = document.getElementById('sync-time');
+        // async function runAutoSync() {
+        //     const indicator = document.getElementById('sync-indicator');
+        //     const statusText = document.getElementById('sync-status');
+        //     const timeText = document.getElementById('sync-time');
 
-            if (!navigator.onLine) {
-                indicator.style.backgroundColor = '#dc3545';
-                statusText.innerText = 'OFFLINE';
-                statusText.className = 'fw-bold text-danger text-uppercase';
-                return;
-            }
+        //     if (!navigator.onLine) {
+        //         indicator.style.backgroundColor = '#dc3545';
+        //         statusText.innerText = 'OFFLINE';
+        //         statusText.className = 'fw-bold text-danger text-uppercase';
+        //         return;
+        //     }
 
-            if (isSyncing) return;
+        //     if (isSyncing) return;
 
-            isSyncing = true;
-            indicator.style.backgroundColor = '#fd7e14';
-            statusText.innerText = 'SYNCING...';
+        //     isSyncing = true;
+        //     indicator.style.backgroundColor = '#fd7e14';
+        //     statusText.innerText = 'SYNCING...';
 
-            try {
-                const response = await fetch('/api/sync-trigger');
+        //     try {
+        //         const response = await fetch('/api/sync-trigger');
 
-                if (!response.ok) throw new Error('Server error');
+        //         if (!response.ok) throw new Error('Server error');
 
-                const data = await response.json();
-                console.log('Sync result:', data);
+        //         const data = await response.json();
+        //         console.log('Sync result:', data);
 
-                indicator.style.backgroundColor = '#198754';
-                statusText.innerText = 'ONLINE';
-                statusText.className = 'fw-bold text-success text-uppercase';
-                timeText.innerText = 'Last: ' + new Date().toLocaleTimeString([], {
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
+        //         indicator.style.backgroundColor = '#198754';
+        //         statusText.innerText = 'ONLINE';
+        //         statusText.className = 'fw-bold text-success text-uppercase';
+        //         timeText.innerText = 'Last: ' + new Date().toLocaleTimeString([], {
+        //             hour: '2-digit',
+        //             minute: '2-digit'
+        //         });
 
-            } catch (error) {
-                indicator.style.backgroundColor = '#dc3545';
-                statusText.innerText = 'SYNC ERROR';
-                statusText.className = 'fw-bold text-danger text-uppercase';
-                console.error('Heartbeat failed:', error);
-            } finally {
-                isSyncing = false;
-            }
-        }
+        //     } catch (error) {
+        //         indicator.style.backgroundColor = '#dc3545';
+        //         statusText.innerText = 'SYNC ERROR';
+        //         statusText.className = 'fw-bold text-danger text-uppercase';
+        //         console.error('Heartbeat failed:', error);
+        //     } finally {
+        //         isSyncing = false;
+        //     }
+        // }
 
         // Remove this line:
         // setInterval(runAutoSync, 60000);

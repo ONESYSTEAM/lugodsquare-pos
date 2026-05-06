@@ -31,7 +31,7 @@ class Router
         Router::add('/print-receipt', fn() => (new POSController())->printReceipt(), 'GET');
 
         // Sync API endpoints
-        Router::add('/api/sync-trigger', fn() => (new SyncController())->handleAutoSync(), 'GET');
+        // Router::add('/api/sync-trigger', fn() => (new SyncController())->handleAutoSync(), 'GET');
         // Router::add('/api/manual-trigger', fn() => (new SyncController())->pullAndPush(), 'GET');
 
         //Cashier Shift Management
